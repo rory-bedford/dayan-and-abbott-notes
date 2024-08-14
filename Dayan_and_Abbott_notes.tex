@@ -677,7 +677,7 @@ So far, we have only studied stimuli that take scalar values. This could include
 And the linear filter is defined:
 
 \begin{equation*}
-    L(t) = \int_0^\infty \int dx dy D(x,y,\tau)s(x,y,t-\tau)
+    L(t) = \int_0^\infty d\tau\int dx dy D(x,y,\tau)s(x,y,t-\tau)
 \end{equation*}
 
 Where the kernel, also called the neuron's space-time receptive field, is given by:
@@ -686,10 +686,10 @@ Where the kernel, also called the neuron's space-time receptive field, is given 
     D(x,y,\tau) = \frac{\langle r \rangle C(x,y,\tau)}{\sigma_s^2}
 \end{equation*}
 
-This can be used just like before to predict a neuron's activity from a stimulus, through either the linear or static non-linear models discussed before.\\
+This can be used just like before to predict a neuron's activity from a stimulus, through either the linear or static non-linear models discussed before. The neuron's receptive field describes the region of sensory space, which in this case consists of 2D images, to which the neuron responds. It is more likely to respond to stimuli similar or overlapping with its receptive field. This might be slightly easier to conceptualise in the case of a separable receptive field, where: $D(x,y,\tau)=D(\tau)D(x,y)$. You can think of $D(x,y)$ as being the image to which the cell is most responsive.\\
 
 To give a brief descriptive summary of the approach up to this point: first of all, we compute the spike-triggered average from a white noise stimulus, which is the mean stimulus in a window of time preceding each spike. This stimulus varies over both time and space. This gives, up to a constant, the optimal stimulus, ie, the stimulus that is most likely to trigger a spike. To predict a neuron's activity from an arbitrary stimulus, we now simply compute the total amount of overlap the stimulus has with the optimal stimulus, which estimates the firing rate, with the appropriate constants.\\
 
-If you've understood the notes up to this point, then the remainder of the chapter should be straightforward, and perhaps more interesting as it dives into the types of receptive fields actually found in neurons in the early visual system. I therefore don't go into detail on this in the notes, as the book does a much better job of this than I could. It does cover interesting topics such as how neurons can be selective to edges, or to the orientation of a bar, or even to a moving stimulus and how these receptive fields can be characterised by the linear filters we have discussed. It also briefly covers how you can construct a complex cell which can't be characterised by a linear filter, from a small number of simple cells, to give cells with certain invariances that we previously saw are impossible with a linear filter.\\
+If you've understood the notes up to this point, then the remainder of the chapter should be straightforward, and perhaps more interesting as it dives into the types of receptive fields actually found in neurons in the early visual system. I therefore don't go into detail on this in the notes, as the book does a much better job of this than I could. It does cover interesting topics such as the on-centre and off-centre receptive fields of certain retinal ganglion cells and cells in the LGN, and how neurons in the primary visual cortex can be selective to edges with certain orientations, or even to a moving stimulus and how these receptive fields can be characterised by the linear filters we have discussed. It also briefly covers how you can construct a complex cell which can't be characterised by a linear filter, from a small number of simple cells, to give cells with certain invariances that we previously saw are impossible with a linear filter.\\
 
 \end{document}
