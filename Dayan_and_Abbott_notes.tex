@@ -10,6 +10,8 @@
 \usepackage{float}
 \pgfplotsset{width=10cm,compat=1.9}
 \usepgfplotslibrary{external}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.18} % Ensure compatibility with your pgfplots version
 \tikzexternalize
 
 \title{Dayan and Abbott Notes}
@@ -236,23 +238,6 @@ Equation (1.20) also covers the integral forms of this equation in terms of $\rh
             domain=0:10
         ]
 
-        % Randomly changing stimulus (using sine function as an example)
-        \addplot [smooth, thick, stimuluscolor] 
-            table[x=x, y=y] {
-                x y
-                0 0.5
-                1 0.7
-                2 0.3
-                3 0.9
-                4 0.1
-                5 0.4
-                6 0.8
-                7 0.2
-                8 0.6
-                9 0.4
-                10 0.5
-            };
-
         % Spike train for a single neuron (small vertical lines)
         \addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue] 
             coordinates {
@@ -272,7 +257,6 @@ Equation (1.20) also covers the integral forms of this equation in terms of $\rh
             ] {1.8} \closedcycle;
         }
 
-        % Gaussian kernel
         \addplot[
             domain=0:10,
             samples=100,
@@ -586,8 +570,8 @@ This is exactly why the spike-triggered average is a useful thing to calculate. 
             coordinates {
                 (0, 1)
             };
-
         \node at (axis cs:-0.05,1) [anchor=west, font=\footnotesize] {$r_{\text{est}}(t) = r_0 + \int_0^\infty d\tau D(\tau)s(t-\tau)$};
+
         
         \end{axis}
     \end{tikzpicture}
@@ -692,5 +676,472 @@ This can be used just like before to predict a neuron's activity from a stimulus
 To give a brief descriptive summary of the approach up to this point: first of all, we compute the spike-triggered average from a white noise stimulus, which is the mean stimulus in a window of time preceding each spike. This stimulus varies over both time and space. This gives, up to a constant, the optimal stimulus, ie, the stimulus that is most likely to trigger a spike. To predict a neuron's activity from an arbitrary stimulus, we now simply compute the total amount of overlap the stimulus has with the optimal stimulus, which estimates the firing rate, with the appropriate constants.\\
 
 If you've understood the notes up to this point, then the remainder of the chapter should be straightforward, and perhaps more interesting as it dives into the types of receptive fields actually found in neurons in the early visual system. I therefore don't go into detail on this in the notes, as the book does a much better job of this than I could. It does cover interesting topics such as the on-centre and off-centre receptive fields of certain retinal ganglion cells and cells in the LGN, and how neurons in the primary visual cortex can be selective to edges with certain orientations, or even to a moving stimulus and how these receptive fields can be characterised by the linear filters we have discussed. It also briefly covers how you can construct a complex cell which can't be characterised by a linear filter, from a small number of simple cells, to give cells with certain invariances that we previously saw are impossible with a linear filter.\\
+
+\section{Chapter 3 - Neural Decoding}
+
+Neural decoding is the reverse of neural encoding: its goal is to construct an estimate of the stimuli, given neural activity. This chapter begins by looking at rate-based models, where we predict static stimuli from single-neuron or population spike-count rates. In particular, it begins with two specific models: a single-neuron threshold test, and a vector-based model. These are highly specific to the cells and stimuli they model, so are useful to cover, but not as informative as the development of a generalised toolkit for neural decoding, which is what we will therefore focus on. Rate-based decoding can in general be seen as a classification or regression task, so much of the machine learning literature is directly relevant. We will focus on a particularly powerful approach, that of probabilistic, Bayesian models. This framework gives a theoretically satisfying and unified approach to the problem of rate-based decoding. We will then also discuss Fisher information, which can help develop some intution about how a neuron encodes information about a stimulus. Finally, we will also cover spike-train decoding methods.
+
+\subsection{Bayesian rate-based decoding}
+
+Neural decoding is essentially an inverse problem: in the context of sensory stimuli, we view the stimulus as a cause, with neural activity as a response dependent on this cause. This means that we can fairly directly measure this relationship in the forward direction. As we saw in chapter 1, we can freely change a stimulus to any value we want, measure the spike-count rate of a neuron over several trials, and then directly characterise this relationship with a tuning curve. The inverse relationship is not directly accessible to us in the same way: we cannot fix a neuron's response to a set value and record all the stimuli that caused this response. We therefore need to use inverse techniques to disentangle this relationship.\\
+
+In particular, we take a probabilistic approach, where we accept from the get-go that there is noise present in both the neural response and our measurements, and then construct optimal estimates of the stimulus from these noisy measurements. The toolkit used to do this is known as Bayesian inference, and provides a unified theoretical framework for the decoding problem, and is also an optimal decoding strategy in the presence of noise.\\
+
+In the Bayesian approach, we assume a generative model of the neural response given a stimulus, $p(\bm{r}|s)$. This is a conditional probability distribution, which is a distribution over the possible firing rates of all the neurons being measured, given some value $s$ of the stimulus.\\
+
+Previously we studied tuning curves, which give the mean firing rate of a neuron given a stimulus. This amounted to just fitting some parameterised curve to the measured $r, s$ pairs, such that $f_\theta(s) \approx \langle r \rangle$. Tuning curves can take many different functional forms, as we have seen. Now all we are doing is extending this idea to the full probability distribution of the neuron's firing rate given a stimulus. Often, we will use the Poisson distribution for this, which, as we saw in chapter 1, gives a good approximation of the distribution of the spike-count rate over the course of a trial, and has the benefit of not needing any additional parameters to fit beyond the tuning curve, as it is characterised entirely by its mean. Other distributions are possible though; for example, you may come across tuning curve plus isotropic (uniform) Gaussian noise models, or models where the noise is proportional to the mean firing rate.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=11cm,
+            height=6cm,
+            xlabel={Stimulus value $s$},
+            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+            ylabel={Firing rate $\langle r \rangle$},
+            axis y line=left,
+            axis x line=bottom,
+            xmin=0, xmax=10,
+            ymin=-2, ymax=10,
+            clip=false,
+            domain=0:10,
+            xtick=\empty,
+            ytick=\empty
+        ]
+        
+        % Gaussian kernel
+        \addplot[
+            name path=main,
+            domain=0:10,
+            samples=100,
+            thick,
+            black,
+            samples=50,
+            unbounded coords=jump,
+            smooth
+        ] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=top,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=bottom,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot [
+            thick,
+            color=blue,
+            fill=blue, 
+            fill opacity=0.1
+        ]
+        fill between[
+            of=top and bottom
+        ];
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (3.5, 2) (3.5, 4.7)
+        };
+
+        \draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt}] 
+            (axis cs:4,2) -- (axis cs:4,4.7) node[midway,xshift=10pt,right] {\footnotesize $\text{ }p(\bm{r}|s)$};
+
+        \end{axis}
+    
+    \end{tikzpicture}
+
+\end{figure}
+
+
+Recall, for example, the form of the Poisson distribution, assuming independence between different neurons, and where each neuron $a$ is described by a different tuning curve $f_a(s)$:\\
+\begin{equation*}
+    p(\bm{r}|s) = \prod_a \frac{e^{-f_a(s)T}(f_a(s)T)^{r_aT}}{(r_aT)!}
+\end{equation*}
+
+To be very clear here, the term $f_a(s)T$ is the mean spike-count of neuron $a$ given our tuning curve, and $r_aT$ is the spike-count we actually measure.\\
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=11cm,
+            height=6cm,
+            xlabel={Stimulus value $s$},
+            xlabel style={at={(axis description cs:0.5,-10)}, anchor=north},
+            ylabel={Firing rate $\langle r \rangle$},
+            axis y line=left,
+            axis x line=bottom,
+            xmin=0, xmax=10,
+            ymin=-2, ymax=10,
+            clip=false,
+            domain=0:10,
+            xtick=\empty,
+            ytick=\empty
+        ]
+        
+        % Gaussian kernel
+        \addplot[
+            name path=main,
+            domain=0:10,
+            samples=100,
+            thick,
+            black,
+            samples=50,
+            unbounded coords=jump,
+            smooth
+        ] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=top,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=bottom,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot [
+            thick,
+            color=blue,
+            fill=blue, 
+            fill opacity=0.1
+        ]
+        fill between[
+            of=top and bottom
+        ];
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (2.8, 2) (3.5, 2)
+        };
+
+        \draw[decorate,decoration={brace,amplitude=10pt,raise=2pt}] 
+            (axis cs:2.8,3) -- (axis cs:3.55,3)
+            node[midway, above=15pt] {\footnotesize $p(s|\bm{r})$};
+
+        \end{axis}
+    
+    \end{tikzpicture}
+
+\end{figure}
+
+So our procedure at this point is to fit the parameters of a tuning curve for each neuron to the measured data, and use this to describe a generative model that gives a distribution of firing rates for each neuron given a stimulus. Now the decoding task is to estimate the stimulus \textit{given} the firing rates. This is done using Bayes' theorem, which states that the posterior distribution of the stimulus given the firing rates is proportional to the likelihood of the firing rates given the stimulus, times the prior distribution of the stimulus:
+
+\begin{align*}
+    p(s|\bm{r}) &= \frac{p(\bm{r}|s)p(s)}{p(\bm{r})}\\[10pt]
+    \text{Posterior} &= \frac{\text{Likelihood} \times \text{Prior}}{\text{Evidence}}
+\end{align*}
+
+The prior term, $p(s)$, represents our 'best guess' distribution over the stimulus values before we have any knowledge of the neural response. For example, if we know the stimulus takes value $a$ two-thirds of the time, and $b$ one-third of the time, then we could set $p(s=a)=2/3$ and $p(s=b)=1/3$. If no such information is available, then we typically set our prior to a uniform distribution, or some other distribution that is relatively uninformative - typically, for relatively sensible priors, the results won't be affected too much.\\
+
+The evidence term is calculated by marginalising over the stimulus, and acts as a normalising constant. In full:
+
+\begin{equation*}
+    p(\bm{r}) = \int ds p(\bm{r}|s)p(s)
+\end{equation*}
+
+As we can see, dividing by this term just ensures that we have a well-defined probability distribution, as integrals over a probability distribution must be equal to 1.\\
+
+The full Bayesian approach would be to just leave things here: given a measured neural response, we return the probability distribution over possible stimulus values given by Bayes' theorem. However, there are cases where we require a point estimate of the stimulus, ie, a specific value of $s$ that we determine to be the 'best' estimate of $s$ given $\bm{r}$. One method of doing this is to take the mode of the posterior distribution - that is, the value of $s$ that maximises the posterior distribution. This is known as MAP estimation (maximum a posteriori). It has the benefit of us not needing to calculate the normalising constant, which is typically analytically intractable, and can be computationally expensive to approximate. Note that we can plug our posterior into any monotonic (always increasing) function, and the MAP estimate will be identical. Typically, we therefore maximise the log posterior, as the logarithm function has nice algebraic properties:
+
+\begin{equation*}
+    s_{MAP} = \text{argmax}_s \log p(\bm{r}|s) + \log p(s)
+\end{equation*}
+
+And we see that we can safely ignore the $-\log p(\bm{r})$ term, as it does not depend on $s$.\\
+
+As with many optimisation problems, the solution for many models is determined by differentiating the log posterior with respect to the stimulus, and setting the result to zero. This can give an exact analytical solution for $s_{MAP}$, into which we can plug in any firing rate vector $\bm{r}$ and get out our best estimate of the stimulus that caused it. The book covers some examples of solutions where this is the case.\\
+
+The maximum likelihood (ML) approach is to give instead the stimulus that maximises $\log p(\bm{r}|s)$. This is identical to the MAP estimate, but ignores the prior, and is therefore equivalent to using a uniform prior that is independent of $s$.
+
+\subsection{Fisher information}
+
+Fisher information is a measure of how much information a neuron, or population of neurons, can carry about a stimulus. It tells us the amount of accuracy with which we can hope to decode a stimulus value. It is therefore useful in the theoretical derivation of error bounds for decoding algorithms, which are beyond the scope of these notes. However, a brief discussion of Fisher information is helpful here as it aids our understanding of how neurons encode information. Note that a somewhat more useful measure is given by Shannon's mutual information, which we will discuss in the next chapter.\\
+
+Consider, once more, the tuning curve of a neuron. Imagine that we want to decode a stimulus value in the presence of noise. The diagram below shows the deviation of our decoding at a region where the tuning curve is steep, and a region where the tuning curve is shallow. The key takeaway from this section is that neurons are maximally informative about a stimulus at regions where their tuning curve is steepest. The diagram makes this obvious, but it may be somewhat surprising at first, as we would naively assume neurons are maximally informative where they are responding the most.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            width=11cm,
+            height=9cm,
+            xlabel={Stimulus value $s$},
+            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+            ylabel={Firing rate $\langle r \rangle$},
+            axis y line=left,
+            axis x line=bottom,
+            xmin=0, xmax=10,
+            ymin=-2, ymax=10,
+            clip=false,
+            domain=0:10,
+            xtick=\empty,
+            ytick=\empty
+        ]
+        
+        % Gaussian kernel
+        \addplot[
+            name path=main,
+            domain=0:10,
+            samples=100,
+            thick,
+            black,
+            samples=50,
+            unbounded coords=jump,
+            smooth
+        ] {10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=top,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot[
+            name path=bottom,
+            domain=0:10,
+            samples=100,
+            thin,
+            gray,
+            samples=50,
+            unbounded coords=jump,
+            smooth,
+            opacity=0.1
+        ] {-1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+
+        \addplot [
+            thick,
+            color=blue,
+            fill=blue, 
+            fill opacity=0.1
+        ]
+        fill between[
+            of=top and bottom
+        ];
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (0,5) (5.45,5)
+        };
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (5.45,5) (5.45,-2)
+        };
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (4.5,5) (4.5,-2)
+        };
+
+        \draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}] 
+            (axis cs:4.5, -2) -- (axis cs:5.45,-2)
+            node[midway, below=15pt] {\footnotesize $\Delta s$};
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (0,8.5) (8,8.5)
+        };
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (6,8.5) (6,-2)
+        };
+
+        \addplot[
+            color=black,
+            dashed,
+            thick
+        ]
+        coordinates {
+            (8,8.5) (8,-2)
+        };
+
+        \draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}] 
+            (axis cs:6, -2) -- (axis cs:8,-2)
+            node[midway, below=15pt] {\footnotesize $\Delta s$};
+
+        \end{axis}
+    
+    \end{tikzpicture}
+
+\end{figure}
+
+The Fisher information captures this through the term $\left ( \frac{\partial\ln p(\bm{r}|s)}{\partial s} \right)^2$, where the square ensures that it doesn't matter if the slope is pointing up or down, and the logarithm is used for its nice algebraic properties. This is not defined for the mean of the tuning curve as shown in the diagram but for the entire conditional probability distribution, so we then just take the mean of this term over the entire set of possible responses:
+
+\begin{equation*}
+    I_F(s) = \int d\bm{r} p(\bm{r}|s)\left ( \frac{\partial\ln p(\bm{r}|s)}{\partial s} \right)^2
+\end{equation*}
+
+Plugging in a value of $s$ into the Fisher information gives us a measure of how much information the neural response can have about the stimulus at that point.
+
+\subsection{Spike-train decoding}
+
+So far, we have only considered rate-based decoding methods. If we want to decode a time-varying stimulus, then we need to use spike-trains. A basic statement of this problem is that we are given as input a series of spike-times $(t_1,...,t_n)$ up to a time $t$, and we want to predict the stimulus value at this time, $s(t)$. Recall that we often describe a spike-train using a sum of dirac-delta functions to give a continuous function $\rho (\tau)$. In the diagram below, note that $\tau$ is the time parameter we use to describe the history of the trial so far, which we can use to predict the stimulus at the current time point $t$.\\
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        % Define some colors for the stimulus and STA window
+        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
+        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
+        
+        \begin{axis}[
+            width=12cm,
+            height=4cm,
+            xlabel={Time (s)},
+            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+            axis y line=none,
+            axis x line=bottom,
+            xmin=0, xmax=10,
+            ymin=0, ymax=2,
+            clip=false,
+            domain=0:10
+        ]
+
+        % Spike train for a single neuron (small vertical lines)
+        \addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue] 
+            coordinates {
+                (1, 1.5)
+                (1.5, 1.5)
+                (4, 1.5)
+                (5, 1.5)
+                (5.5, 1.5)
+                (7, 1.5)
+                (8.5, 1.5)
+                (9, 1.5)
+                (9.5, 1.5)
+            };
+
+        \addplot[
+            domain=0:10,
+            samples=100,
+            thick,
+            black,
+            smooth
+        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+
+        \node[anchor=west] at (axis cs:10, 1.1) {predict stimulus $s(t)$};
+        \node[anchor=north] at (axis cs:5, 2.3) {spike-train $\rho (t-\tau)$};
+
+        \end{axis}
+    \end{tikzpicture}
+
+\end{figure}
+
+This problem is in fact almost exactly the reverse of the time-varying neural encoding problem we met in chapter 2. However, there are a couple of crucial differences that warrant discussion. As we've already discussed, in a laboratory setting, we can treat the stimulus as an independent variable, which causes the dependent variable that is the neural response. This means we can give the stimulus any structure we want, such as making it a white noise stimulus, which is how we solved the encoding problem. When decoding, however, we can't directly control the neural response, so we have to work with whatever response we are given. Furthermore, in the time-varying case, the direction of causation makes our problem statement quite unusual: the stimulus causes future values of the response, yet we are trying to predict the stimulus from the response's history. This is, of course, only possible if the history of the \textit{stimulus} provides information about the future stimulus, as the neural response can in reality only tell us about the stimulus that caused it, not the future stimulus.\\
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    % Define a style for all nodes
+    \tikzstyle{node} = [draw, circle, minimum size=50pt, inner sep=0pt]
+
+    % Nodes
+    \node[node] (s) at (0, 4) {$s(t)$};
+    \node[node] (s') at (4, 4) {$s(t+\Delta t)$};
+    \node[node, fill=red!30] (r) at (2, 0) {$r(t)$}; % Different color for r
+
+    % Edges with arrows
+    \draw[->, line width=1.5pt] (s) -- node [midway, left] {Causes} (r);
+    \draw[->, line width=1.5pt] (r) -- node [midway, right] {Predict} (s');
+    \draw[->, line width=1.5pt] (s) -- node [midway, above] {Causes} (s');
+\end{tikzpicture}
+\end{figure}
+
+In the diagram above, we can only observe the response, but can use this to predict the stimulus at a later time, as they are still correlated via the stimulus history. This does mean, however, that spike-train decoding is impossible if the stimulus is white-noise: we require internal structure within the stimulus.\\
+
+A classic application of spike-train decoding methods would be a brain-computer interface, where we are trying to gain information about a stimulus on the fly from neural activity. For this reason, we talk about spike-train decoding, rather than firing rate decoding: we want to be able to form a prediction for a single trial, as we won't necessarily be able to record many trials to smooth over to give the firing rate function. Additionally, note that we introduce a time lag $\tau_0$ into our decoding, as this increases accuracy, as it allows \textit{some} spikes to occur after the stimulus we are decoding, and therefore be casued by them. However, too large a time lag would make many BCI applications impossible.\\
+
+Proceeding exactly like the encoding case, we want to form a linear estimate of the stimulus at time $t-\tau_0$, given the entire spike-train up to the time $t$. This is done by integrating over the whole trial with a kernel $K(\tau)$. Note in the equation shown, the integral is over all time, not from time 0 to infinity as you might expect. This means technically we are considering spikes after the time $t$ (recall $\tau$ runs backwards from time $t$). This can be avoided by making the kernel acausal, which means we clamp its value to 0 for negative values of $\tau$.
+
+\begin{equation*}
+    s_{est}(t-\tau_0) = \int_{-\infty}^\infty d\tau (\rho(t-\tau)-\langle r \rangle)K(\tau)
+\end{equation*}
+
+Our job is to figure out the kernel that gives the \textit{best} estimate of the stimulus given the spike-train. Just like with neural encoding, we consider a training set of trials where we measure both the spike-trains and the stimulus, and minimise the following mean squared error over all these trials:
+
+\begin{equation*}
+    \text{MSE} = \frac{1}{T}\int_0^T dt \left\langle \left ( s(t-\tau_0) - s_{est}(t-\tau_0) \right)^2\right\rangle
+\end{equation*}
+
+We can't minimise this like before, because the neural response is not white noise (it has a non-delta autocorrelation), so the full solution requires a Fourier decomposition which is beyond the scope of these notes. However, in the case of a low firing rate, where effects such as the refractory period don't matter much, our spike-trains effectively have zero auto-correlation and the solution is very interpretable, so we briefly mention what the solution amounts to.\\
+
+Recall the spike-triggered average $C(\tau)$ discussed in chapter 1. Our optimal kernel amounts to the spike-triggered average, defined so that we consider stimuli after spikes rather than before, and shifted an amount $\tau_0$ to the left, to account for the time lag. Our decoding procedure then just sums up the spike-triggered average over all spikes, as shown in the figure below.\\
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{decoding.png} % Adjust the width as needed
+    \label{fig:example_png}
+\end{figure}
+
+This is in fact an extremely intuitive result. If we only measured one spike, our best possible guess for the stimulus' future values would be the spike-triggered average following this spike. In the presence of many spikes, we do the same thing, summing over the best possible guess provided by each spike individually.
 
 \end{document}
