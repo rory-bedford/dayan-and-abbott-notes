@@ -8,9 +8,11 @@
 \usepackage{pgfplots}
 \usepackage{tikz}
 \usepackage{float}
+\usepackage{subcaption}
 \pgfplotsset{width=10cm,compat=1.9}
 \usepgfplotslibrary{external}
 \usepgfplotslibrary{fillbetween}
+\usetikzlibrary{trees}
 \pgfplotsset{compat=1.18} % Ensure compatibility with your pgfplots version
 \tikzexternalize
 
@@ -1143,5 +1145,242 @@ Recall the spike-triggered average $C(\tau)$ discussed in chapter 1. Our optimal
 \end{figure}
 
 This is in fact an extremely intuitive result. If we only measured one spike, our best possible guess for the stimulus' future values would be the spike-triggered average following this spike. In the presence of many spikes, we do the same thing, summing over the best possible guess provided by each spike individually.
+
+\section{Chapter 4 - Information Theory}
+
+Previous chapters have been interested in \textit{how} neural encoding occurs. This chapter is concerned instead with \textit{what} type of encoding should take place. In particular, we focus on the efficiency of encodings in the very early visual system - that is, how can encodings be designed so that we express as much information as possible about natural scenes. The toolkit we develop in order to answer this question comes from Claude Shannon's information theory, which was originally conceived to describe electronic communication down noisy channels such as telephone wires, but is equally applicable to neural communication channels. So we begin with an overview of information theory, then give a more qualitative discussion of how neurons can maximise their coding efficiency than that presented in the book.
+
+\subsection{Information and entropy}
+
+A brief overview of probability distributions, information, and entropy by themselves is useful here before we dive into relating these to neural responses and stimuli.\\
+
+The first concept we will discuss is surprise. Imagine you toss a single unbiased coin, and the result comes up heads. We can characterise the amount of information this result gives you using a quantity called surprise. This is measured in bits - and the information gain from observing heads for a coin toss is 1 bit. So a bit is by definition how much uncertainty is resolved by knowing the outcome of an equal probability binary variable. (It's worth noting, however, that this term is slightly contentious - we often use 'bit' to refer to a binary variable irrespective of whether its probability is 50/50, such as a bit in your computer). We can extend this idea to arbitrary probabilities as follows. Imagine that you have repeated fair coin tosses: the information gained from each coin toss is additive. The diagram below illustrates this for 3 repeated coin tosses: the total information gain is 3 bits, while the probability of each final outcome is $\frac{1}{8}$.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  level distance=2cm,
+  level 1/.style={sibling distance=4cm},
+  level 2/.style={sibling distance=2cm},
+    level 3/.style={sibling distance=1cm},
+  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+]
+\node {} % Root
+  child {node {} % Left Child
+    child {node {} % Left-Left
+      child {node {}}
+      child {node {}}
+    }
+    child {node {} % Left-Right
+      child {node {}}
+      child {node {}}
+    }
+  }
+  child {node {} % Right Child
+    child {node {} % Right-Left
+      child {node {}}
+      child {node {}}
+    }
+    child {node {} % Right-Right
+      child {node {}}
+      child {node {}}
+    }
+  };
+
+\draw[->, thick] (4.5, 0) -- (4.5, -6); % Draws an arrow from (4,0) to (6,2)
+    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+\node[draw=none, fill=none] at (6.5, -3) {Increasing surprise}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -7) {$p=\frac{1}{8}$ or surprise $=3$ bits}; % Places text at (6,2.5)
+
+\end{tikzpicture}
+\end{figure}
+
+A moments thought tells you that the surprise is related to the probability of an outcome via the following formula:
+
+\begin{equation*}
+    \text{surprise} = -\log_2(p)
+\end{equation*}
+
+We extend this naturally to probabilities that are not powers of 2, which will lead to non-integer values for the surprise. The surprise of an unlikely event is high, while the surprise of an unlikely event is low. This makes sense - if you observe an event that was certain, ie, has probability one, you have gained zero information, and the surprise is zero, while for very unlikely events, the surprise can grow incredibly high. Surprise as a quantity has the important property that it is additive over non-independent events. This means the information gain from independent coin tosses add up. This can be shown easily, as independent probabilities multiply, and the logarithm of a product is the sum of the logarithms.\\
+
+While surprise is a defined for a the measurement of a single outcome, entropy is defined across an entire probability distribution. Entropy simply tells you, on average, how surprising is a measurement drawn from that probability distribution. We usually think of high entropy distributions as being \textit{disordered}, while low entropy distributions are \textit{ordered}. This aligns with our more formal definition: for a very ordered distribution, the outcomes of draws are typically not very surprising, while disordered distributions have more surprising draws on average. Entropy is also measured in bits. Formally, the entropy of a probability distribution is given by:
+
+\begin{equation*}
+    H = -\sum_i p_i \log_2(p_i)
+\end{equation*}
+
+If we go back to our binary tree example, we can graphically represent some different probability distributions with different entropies. We see that the entropy means, on average, how far down the tree do you traverse. For general probability distributions this idea is extended, using the same formula, and really has the same meaning but lacks the graphical interpretability of a binary tree.
+
+\begin{figure}[H]
+\centering
+    \begin{subfigure}[t][][bs]{0.45\textwidth}
+\begin{tikzpicture}[
+  level distance=2cm,
+  level 1/.style={sibling distance=4cm},
+  level 2/.style={sibling distance=2cm},
+    level 3/.style={sibling distance=1cm},
+  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+]
+\node {} % Root
+  child {node {} % Left Child
+    child {node {} % Left-Left
+      child {node {}}
+      child {node {}}
+    }
+    child {node {} % Left-Right
+      child {node {}}
+      child {node {}}
+    }
+  }
+  child {node {} % Right Child
+    child {node {} % Right-Left
+      child {node {}}
+      child {node {}}
+    }
+    child {node {} % Right-Right
+      child {node {}}
+      child {node {}}
+    }
+  };
+    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -6.8) {$H=8*\frac{1}{8}*3=3\text{ bits}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -7.3) {High entropy}; % Places text at (6,2.5)
+\end{tikzpicture}
+\end{subfigure}
+\hfill
+\hspace{0.5cm}
+    \begin{subfigure}[t][][bs]{0.45\textwidth}
+\begin{tikzpicture}[
+  level distance=2cm,
+  level 1/.style={sibling distance=4cm},
+  level 2/.style={sibling distance=2cm},
+    level 3/.style={sibling distance=1cm},
+  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+]
+\node {} % Root
+  child {node {} % Left Child
+    child {node {} % Left-Left
+      child {node {}}
+      child {node {}}
+    }
+    child {node {} % Left-Right
+    }
+  }
+  child {node {} % Right Child
+  };
+    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -6.8) {$H=0.5*1+0.25*2+2*0.125*3=1.75\text{ bits}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -7.3) {Medium entropy}; % Places text at (6,2.5)
+\end{tikzpicture}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t][][t]{0.45\textwidth}
+\centering
+\begin{tikzpicture}[
+  level distance=2cm,
+  level 1/.style={sibling distance=4cm},
+  level 2/.style={sibling distance=2cm},
+    level 3/.style={sibling distance=1cm},
+  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+]
+\node {} % Root
+  child {node {} % Left Child
+  }
+  child {node {} % Right Child
+  };
+    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -2.8) {$H=2*0.5*1=1\text{ bits}$}; % Places text at (6,2.5)
+    \node[draw=none, fill=none] at (0, -3.3) {Low entropy}; % Places text at (6,2.5)
+\end{tikzpicture}
+\end{subfigure}
+\end{figure}
+
+For continuous probability distributions, we can also define the differential entropy, as:
+
+\begin{equation*}
+    H = -\int dx p(x) \log_2(p(x))
+\end{equation*}
+
+There are complications with continuous distributions discussed in the book in terms of having to define a measurement accuracy. In fact, the above definition doesn't really make sense (look at the units - $p(x)$ has units $[x]^{-1}$, and so we're taking a logarithm of a quantity with units, which doesn't make sense, and also it means a this quantity is not invariant under transformations of $x$). We won't really worry about the details of this, but it's worth being aware of.\\
+
+Before discussing further topics within information theory such as mutual information, we will quickly review multivariate probability distributions. A probability distribution can be defined over more than one variable. $P(x,y)$ is the joint probability that the first variable takes value $x$, and the second variable takes value $y$. Such probability distributions are normalised, such that:
+
+\begin{equation*}
+    \sum_{x,y} P(x,y) = 1
+\end{equation*}
+
+We define the marginal probability distribution over $x$ as the distribution that we get if we don't care about measuring the $y$ values - so we sum over all possible $y$ values we could measure:
+
+\begin{equation*}
+    P(x) = \sum_y P(x,y)
+\end{equation*}
+
+Additionally, we define the conditional probability distribution as the distribution over $x$, \textit{given} that we know the value of $y$:
+
+\begin{equation*}
+    P(x|y) = \frac{P(x,y)}{P(y)}
+\end{equation*}
+
+The denominator ensures that this is a correctly normalised probability distribution in the variable $x$, so that $\sum_x P(x|y) = 1$.\\
+
+In general, $x$ and $y$ are dependent. This means knowing the value of one of them tells us something about the other. Independence is when they tell us nothing about the other, and so:
+
+\begin{equation*}
+    P(x,y) = P(x)P(y)
+\end{equation*}
+
+Or equivalently:
+
+\begin{equation*}
+    P(x|y) = P(x)
+\end{equation*}
+
+We can now develop our notion of entropy further for multivariate distributions. In general, we want to quantify how much does knowing variable $y$ tell us about variable $x$. Entropy comes in handy here. It could be that, without knowing $y$, the distribution over $x$ is very disordered; it has high average surprise. However, knowing $y$ could make the distribution over $x$ very ordered. This would mean that $y$ is very informative about $x$, and that these two variables have high mutual information. We will formally define these notions now.\\
+
+First of all, we define the full entropy for the joint distribution, which tells us the average information we gain by measuring both variables together:
+
+\begin{equation*}
+    H(X,Y) = -\sum_{x,y} P(x,y) \log_2P(x,y)
+\end{equation*}
+
+We can also define the entropy of a single variable, ignoring the value of the other variable, via its marginal distribution, which tells us the information we gain if we measure this variable, ignoring the other variable:
+
+\begin{equation*}
+    H(X) = -\sum_x P(x) \log_2P(x)
+\end{equation*}
+
+We can also consider the the entropy of the conditional distribution. This tells us the average information we gain by measuring the variable $x$, given that we know the value of $y$. Note this would in general be a function of the value of $y$ we measure. We therefore take the expectation over $y$, which gives what is known as the conditional entropy:
+
+\begin{align*}
+    H(X|Y) &= -\sum_{y} P(y) \sum_x P(x|y) \log_2P(x|y)\\
+    &= -\sum_{x,y} P(x,y) \log_2P(x|y)
+\end{align*}
+
+The conditional entropy $H(X|Y)$ essentially defines a limit on how much we can reduce our uncertainty about $X$ by knowing $Y$ - even in the presence of complete knowledge of $y$ there is still uncertainty about $x$. It is therefore sometimes defined as the noise entropy.\\
+
+Note that all the various ways of relating full, conditional, and marginal probabilities also apply to these entropies, however, the logarithm turns multiplication/division into addition/subtraction. For example:
+
+\begin{equation*}
+    H(X,Y) = H(Y) + H(X|Y)
+\end{equation*}
+
+A particularly important quantity is the mutual information between two variables. This is defined as the reduction in uncertainty about one variable that is obtained by knowing the value of the other. Our initial uncertainty in $x$, without knowing $y$, is just given by the unconditional entropy on $x$, while the uncertainty if we do know $y$ is given by $H(X|Y)$. The mutual information is therefore:
+
+\begin{equation*}
+    I(X;Y) = H(X) - H(X|Y)
+\end{equation*}
+
+Note this is symmetric in $X$ and $Y$. It is also non-negative, as the conditional entropy is always less than the full entropy, and equals zero only when $x$ and $y$ are independent.\\
+
+The following diagram captures all the useful relationships:
+
+\begin{figure}[h] % Use figure environment for floating objects
+    \centering % Center the image
+    \includegraphics[width=0.5\textwidth]{entropy.png} % Adjust width as needed
+\end{figure}
 
 \end{document}
