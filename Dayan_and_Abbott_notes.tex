@@ -1360,27 +1360,100 @@ We can also consider the the entropy of the conditional distribution. This tells
     &= -\sum_{x,y} P(x,y) \log_2P(x|y)
 \end{align*}
 
-The conditional entropy $H(X|Y)$ essentially defines a limit on how much we can reduce our uncertainty about $X$ by knowing $Y$ - even in the presence of complete knowledge of $y$ there is still uncertainty about $x$. It is therefore sometimes defined as the noise entropy.\\
-
 Note that all the various ways of relating full, conditional, and marginal probabilities also apply to these entropies, however, the logarithm turns multiplication/division into addition/subtraction. For example:
 
 \begin{equation*}
     H(X,Y) = H(Y) + H(X|Y)
 \end{equation*}
 
-A particularly important quantity is the mutual information between two variables. This is defined as the reduction in uncertainty about one variable that is obtained by knowing the value of the other. Our initial uncertainty in $x$, without knowing $y$, is just given by the unconditional entropy on $x$, while the uncertainty if we do know $y$ is given by $H(X|Y)$. The mutual information is therefore:
+A particularly important quantity is the mutual information between two variables. This is defined as the reduction in uncertainty about one variable that is obtained by knowing the value of the other. Our initial uncertainty in $x$, without knowing $y$, is just given by the unconditional entropy on $x$ $H(X)$, while the uncertainty if we do know $y$ is given by $H(X|Y)$. The conditional entropy $H(X|Y)$ essentially defines a limit on how much certainty we can have about $X$ by knowing $Y$ - even in the presence of complete knowledge of $y$ there is still inherent noise in the variations of $x$. It is therefore sometimes defined as the noise entropy. The mutual information is therefore:
 
 \begin{equation*}
     I(X;Y) = H(X) - H(X|Y)
 \end{equation*}
 
-Note this is symmetric in $X$ and $Y$. It is also non-negative, as the conditional entropy is always less than the full entropy, and equals zero only when $x$ and $y$ are independent.\\
+Note this is symmetric in $X$ and $Y$ (try to prove this!). It is also non-negative, as the conditional entropy is always less than the full entropy, and equals zero only when $x$ and $y$ are independent. You can interpret the mutual information as a measure of the mutual dependence between the two variables, or how much knowing one tells us about the other.\\
 
-The following diagram captures all the useful relationships:
+The following diagram captures all the useful relationships (areas add or subtract):
 
 \begin{figure}[h] % Use figure environment for floating objects
     \centering % Center the image
     \includegraphics[width=0.5\textwidth]{entropy.png} % Adjust width as needed
 \end{figure}
+
+\subsection{Neural information}
+
+We are now ready to apply our knowledge of information theory to study neural encodings. Some of the mathematics in this chapter gets particularly hard, however, the key concepts are actually quite interpretable, so even more so than in previous chapters our discussion will be quite qualitative.\\
+
+We will consider neurons that use a rate-based encoding to describe their stimulus, meaning they are described by a continuous variable (see the discussion in the book on how our measurement precision of this variable affects the entropy). This neuron encodes a stimulus via its tuning curve (with noise), which gives a conditional probability distribution of the form $p[r|s]$, where $E[r|s]=f(s)$, the tuning curve. We seek to answer the question: what type of tuning curve should the neuron have? In general, neurons of course encode in a way that can solve a variety of problems. A good framework with which to view neural encodings early in the processing chain, such as retinal ganglion cells and cells in the LGN for vision, is to consider them as forming a noisy channel down which we want to send as much information as possible to the primary visual cortex where more complex processing can occur. We therefore take an information-theoretic perspective, in which we want these neurons to express as much information as possible about visual stimuli in their responses. This perspective is quite successful at describing the operation of the early visual system.\\
+
+We therefore seek an encoding that maximises the mutual information between the response and the stimulus. First of all we will consider the marginal distribution over the response, $p(r)$. Regardless of the stimulus, we can already describe what this should look like. We want this distribution to be as disordered as possible - if every measurement from it is as surprising as possible, then the information we gain from each measurement is as high as possible. This means it should be an \texit{entropy maximising} distribution. Compare this with the opposite extreme: if our distribution always gives us the same response $r$, so it has zero entropy, then we gain no inofrmation at all by measuring $r$! So we must maximise the entropy of $p(r)$ subject to some constraints (without constraints we would try to use all real numbers up to infinity to maximise the entropy). Below we list some common constraints and their corresponding entropy maximising distributions.
+
+\begin{itemize}
+    \item Maximum firing rate $r_{max}$: The distribution is a uniform distribution between 0 and $r_{max}$.
+    \item Fixed mean firing rate $\langle r \rangle$: The distribution is the exponential distribution $p(r) = \frac{1}{\langle r \rangle}e^{-r/\langle r \rangle}$.
+    \item Fixed mean and variance: The distribution is the Gaussian distribution $p(r) = \frac{1}{\sqrt{2\pi\sigma^2}}e^{-(r-\mu)^2/2\sigma^2}$.
+\end{itemize}
+
+The marginal distribution over stimuli is given to us by nature: we have no control over it. The idea of an information maximising encoding is to find an appropriate conditional distribution $p(r|s)$ which maps this given stimulus distribution to the entropy maximising distribution (recall $p(r|s)$ is essentially the tuning curve plus noise). The mapping that acheives this has an interesting property: it is area preserving. This means that we encode stimuli with a precision proportional to their likely occurrence: very likely stimuli are encoded with high precision, while unlikely stimuli are encoded with low precision. This is a very intuitive result, and can be seen in the diagram below (for the maximum firing rate constraint).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    % Top axis: Gaussian distribution
+    \begin{axis}[
+        width=\textwidth,
+        height=6cm,
+        axis x line=bottom,
+        axis y line=left,
+        xlabel={$s$},
+        x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
+        ylabel={$p(s)$},
+        xmin=-3, xmax=3,
+        ymin=0, ymax=0.5,
+        xtick=\empty, % No x-axis ticks
+        ytick=\empty  % No y-axis ticks
+    ]
+    \addplot[domain=-3:3, samples=100, thick, black] {exp(-x^2/2)/sqrt(2*pi)};
+    \addplot[domain=-0.1:0.1, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+    \addplot[domain=1:1.2, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+    \end{axis}
+
+    % Bottom axis: Uniform distribution
+    \begin{axis}[
+        width=\textwidth,
+        height=5cm,
+        at={(0,-5cm)}, % Position it below the first plot
+        axis x line=bottom,
+        axis y line=left,
+        xlabel={$r$},
+        x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
+        ylabel={$p(r)$},
+        xmin=-3, xmax=3,
+        ymin=0, ymax=0.3,
+        xtick=\empty, % No x-axis ticks
+        ytick=\empty  % No y-axis ticks
+    ]
+    \addplot[domain=-3:3, samples=2, thick, black] {0.2};
+    \addplot[domain=-0.25:0.25, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
+    \addplot[domain=1.6:1.8, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
+    \end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}[overlay, remember picture]
+    % Example arrow pointing to a specific location
+    \draw[->, thick, black] 
+        (-6.95,6) -- (-6.95,2) 
+        node[midway, above] {};
+    
+    % Another example arrow
+    \draw[->, thick, black] 
+        (-4.5,6) -- (-3.1,2) 
+        node[midway, below] {};
+\end{tikzpicture}
+\end{figure}
+
+So our distribution satisfies the relationship $p(r)\Delta r = p(s) \Delta s$, or equivalently, the tuning curve satisfies the relationship $\frac{df}{ds}=\frac{p(f(s))}{p(s)}$. The main takeaway to remember here is we want an encoding that makes our stimulus into essentially a white noise response.\\
+
+For populations of neurons, it's fairly obvious that different neurons must encode different things to maximise the amount of information they represent. In the information maximisation paradigm, we take this to the extreme, and assert that the responses of any two neurons must in fact be completely independent of each other, so there is no redundancy in their encoding. This means the full distribution over all neurons fully factorises: $p(\bm{r})=\prod_ap(r_a)$. This is of course not true for deeper processing stages: we often end up with highly redundant encodings for a multitude of reasons, but it does provide a good description of the early visual system. All individual neurons 
 
 \end{document}
