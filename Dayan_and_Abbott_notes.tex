@@ -1454,6 +1454,102 @@ The marginal distribution over stimuli is given to us by nature: we have no cont
 
 So our distribution satisfies the relationship $p(r)\Delta r = p(s) \Delta s$, or equivalently, the tuning curve satisfies the relationship $\frac{df}{ds}=\frac{p(f(s))}{p(s)}$. The main takeaway to remember here is we want an encoding that makes our stimulus into essentially a white noise response.\\
 
-For populations of neurons, it's fairly obvious that different neurons must encode different things to maximise the amount of information they represent. In the information maximisation paradigm, we take this to the extreme, and assert that the responses of any two neurons must in fact be completely independent of each other, so there is no redundancy in their encoding. This means the full distribution over all neurons fully factorises: $p(\bm{r})=\prod_ap(r_a)$. This is of course not true for deeper processing stages: we often end up with highly redundant encodings for a multitude of reasons, but it does provide a good description of the early visual system. All individual neurons 
+For populations of neurons, it's fairly obvious that different neurons must encode different things to maximise the amount of information they represent. In the information maximisation paradigm, we take this to the extreme, and assert that the responses of any two neurons must in fact be completely independent of each other, so there is no redundancy in their encoding. This means the full distribution over all neurons fully factorises: $p(\bm{r})=\prod_ap(r_a)$. This makes sense: if any neurons are correlated in their responses, then measuring one tells us information about the others, which reduces the amount of information we can gain from actually measuring the others. The information maximisation approach is of course not true for deeper processing stages: we often end up with highly redundant encodings for a multitude of reasons, but it does provide a good description of the early visual system.\\
+
+So far we have only considered the spike-count rate of neurons and populations of neurons, however, our discussion applies as well to firing rate based encodings. For the early visual system, we know that retinal and LGN cells are spatially distributed (and follow a retinotopic map) and can thus be described by their locations. We can use the linear filters from chapter 2 to predict their responses over both time and space to arbitrary stimuli:
+
+\begin{equation*}
+    L(\bm{a},t) = \int_0^{\infty} d\tau \int d\bm{x} D(\bm{x}-\bm{a},\tau) s(\bm{x},t-\tau)
+\end{equation*}
+
+Here, $\bm{a}$ represents the position of, say, the retinal ganglion cell we are considering, so we have an array of cells that respond differently based on their location to a stimulus that also varies over space and time. Now, just like before, this code will maximise its information about the stimulus if different neural responses are completely uncorrelated and the distributions over their individual responses are entropy maximising. A type of response that approximates these criteria is white noise (this satisifies the first but not necessarily the second criterion). So our approach is to design a filter such that the cells are responding like white noise. Much like TV static, knowing the response of one cell at one time should tell you nothing about the responses of any other cells at any other times. The book describes how this is done in stages in the visual system: retinal ganglion cells are well described as a white-noise response spatially, but are correlated with themselves in time, and then cells in the LGN further whiten the response in the temporal domain.\\
+
+We've seen how white noise has a dirac delta autocorrelation function. We haven't discussed the well-known fact that the Fourier transform of white noise is flat. If you are unfamiliar with the Fourier transform, I would recommend reading the appendix, but for the purpose of this discussion, you just need to know that it is a way of representing any signal in terms of the individual frequency components that make it up. White noise consists of equal mixtures of \textit{all} frequencies.\\
+
+We will also use the convolution theorem to reinterpret what the linear filter above actually does. The neural response is defined as the convolution of the stimulus with a filter, which means we can interpret the function of this filter very straightforwardly by thinking in frequency space. The signal is composed of some distribution over all frequencies, and the filter simply weights these frequencies to produce the response, as shown in the diagram below.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        % Define some colors for the stimulus and STA window
+        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
+        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
+        
+        \begin{axis}[
+            width=12cm,
+            height=4cm,
+            xlabel={$\omega$ (s^{-1})},
+            xticks=none,
+            xmajorticks=false,
+            xlabel style={},
+            axis y line=none,
+            axis x line=bottom,
+            axis line style={-},
+            xmin=0, xmax=5,
+            ymin=0, ymax=2,
+            clip=false,
+            domain=0:5,
+            x dir=reverse,
+        ]
+
+        \pgfmathsetseed{1235}
+        \addplot[
+            domain=0:5,
+            samples=100,
+            thick,
+            black,
+            smooth
+        ] {1 + 2*exp(-((x-5)^2)/8)*(0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4))};
+
+        \node[anchor=west] at (axis cs:0, 1) {Response};
+        \node[anchor=west] at (axis cs:5.8, 1) {$\tilde{L}(\bm{k},\omega)$};
+
+        \addplot[
+            domain=0:5,
+            samples=100,
+            thick,
+            black,
+            smooth
+        ] {4 + 2*exp(-((x-5)^2)/8)};
+
+        \node[anchor=west] at (axis cs:0, 4) {Filter};
+        \node[anchor=west] at (axis cs:5.8, 4) {$\tilde{D}(\bm{k},\omega)$};
+
+        \pgfmathsetseed{1235}
+        \addplot[
+            domain=0:5,
+            samples=100,
+            thick,
+            black,
+            smooth
+        ] {7 + 0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4)};
+
+        \node[anchor=west] at (axis cs:0, 7) {Signal};
+        \node[anchor=west] at (axis cs:5.8, 7) {$\tilde{s}(\bm{k},\omega)$};
+
+        \node[anchor=west] at (axis cs:2.5, 6) {$\times$};
+        \node[anchor=west] at (axis cs:2.5, 3) {$=$};
+
+        \end{axis}
+    \end{tikzpicture}
+
+\end{figure}
+
+We only plot the frequencies in time, but obviously they exist in space as well. Now, we can measure the spatial and temporal power spectrum of naturally occurring visual stimuli $\tilde{s}(\bm{k},\omega)$. In order to maximise the information our responses have about the stimuli, it is obvious that we just need to design our filter to invert the natural power spectrum to give a white noise spectrum! This means:
+
+\begin{equation*}
+    \tilde{D}(\bm{k},\omega)=\frac{\sigma_L}{\tilde{s}(\bm{k},\omega)}
+\end{equation*}
+
+Note this is slightly different to the solution discussed in the book: first of all, I have neglected discussing phases to simplify things (Fourier transforms give you complex numbers!), and additionally, the book uses the Fourier transform of the stimulus autocorrelation function, not the stimulus itself, hence the square root. These are related by the Wiener-Khinchin theorem, and I personally find the Fourier transform of an autocorrelation function trickier to conceptualise.\\
+
+This chapter works through thees calculations for naturally occurring stimuli, with some interesting discussions of the results. They also use the additional complication of assuming additive white noise on top of the measured stimulus, which modifies the results slightly, but conceptually our discussion still stands. An interesting result is that they use this information-maximisation approach to derive the retinal ganglion cells' spatial receptive fields, finding results that match experiment well.\\
+
+Some of these results are actually very interpretable: for example, in the diagram below, the receptive field with the dashed line represents the retinal ganglion cell's receptive field in the presence of high noise, while the solid line represents its response in the presence of low noise. In the high noise case, acheiving an accurate encoding by averaging out the noise over a larger region of space becomes a priority, while in the low noise case, it's more important to have neighbouring neurons having non-overlapping neurons, hence the centre-surround structure.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{receptive.png}
+\end{figure}
 
 \end{document}
