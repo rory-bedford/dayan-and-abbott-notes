@@ -39,62 +39,62 @@ In this chapter, we first look at neuron spike trains and firing rates, which ar
 Neurons fire action potentials at discrete points in time. If we measure a neuron's activity in a single trial, we end up with a list of times $t_i$ for $i = 1,2,...,n$ for n spikes, called a spike train. However, neurons don't work with infinite precision; there is some noise inherent in the timings of these action potentials. We therefore seek an alternate description of a neuron's activity that describes the \textit{rate} at which it is firing, not the exact times of its spikes. The spike-count rate is the neuron's firing rate measured across the entire trial. For a trial of length T:
 
 \begin{equation*}
-    r = \frac{n}{T}
+	r = \frac{n}{T}
 \end{equation*}
 
 The problem with this is that it doesn't account for variation of a neuron's firing rate within a trial, which is an important aspect of how neurons encode information. We therefore seek a firing rate \textit{function}, that varies with time, $r(t)$. This function is an abstraction that is a very useful way to think about neural activity given that spike trains are necessarily stochastic. We can think of it as being the same as the spike-count rate as above, but instead of considering the entire trial, we bin the trial into small windows of length $\Delta t$. We can then think of the function $r(t)$ as being the firing rate in the window $t$ to $t+\Delta t$, ie., the number of spikes in this window divided by $\Delta t$. This is not very useful if we are only considering one spike train, but if we perform the same recording across many trials, we can average their results to get a good description of a neuron's activity. Furthermore, the more trials we have, the smaller we can make the window $\Delta t$, and the more precise of firing rate function becomes.\\
 
 \begin{figure}[ht]
-\centering
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            axis y line=none,
-            axis x line=middle,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            xlabel={s},
-            clip=false
-        ]
-        
-        % Spike train for a single neuron (small vertical lines)
-        \addplot+[ycomb, thick, mark=|, mark size=2pt] 
-            coordinates {
-                (0, 1)
-                (1, 1)
-                (2.5, 1)
-                (3.2, 1)
-                (4.5, 1)
-                (5.2, 1)
-                (6.5, 1)
-                (7, 1)
-                (8.5, 1)
-                (9, 1)
-            };
-        
-        % Sliding window
-        \fill[red, opacity=0.3] (axis cs:3,0) rectangle (axis cs:5,2);
-        \draw[red, thick] (axis cs:3,0) -- (axis cs:3,2);
-        \draw[red, thick] (axis cs:5,0) -- (axis cs:5,2);
-        \node[red] at (axis cs:4,2.2) {$\Delta t$};
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				axis y line=none,
+				axis x line=middle,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				xlabel={s},
+				clip=false
+			]
 
-        \node[anchor=north] at (axis cs:5.9, 2.2) {$r(t) \approx \frac{n}{\Delta t}$};
-        
-        \end{axis}
-    \end{tikzpicture}
+			% Spike train for a single neuron (small vertical lines)
+			\addplot+[ycomb, thick, mark=|, mark size=2pt]
+			coordinates {
+					(0, 1)
+					(1, 1)
+					(2.5, 1)
+					(3.2, 1)
+					(4.5, 1)
+					(5.2, 1)
+					(6.5, 1)
+					(7, 1)
+					(8.5, 1)
+					(9, 1)
+				};
+
+			% Sliding window
+			\fill[red, opacity=0.3] (axis cs:3,0) rectangle (axis cs:5,2);
+			\draw[red, thick] (axis cs:3,0) -- (axis cs:3,2);
+			\draw[red, thick] (axis cs:5,0) -- (axis cs:5,2);
+			\node[red] at (axis cs:4,2.2) {$\Delta t$};
+
+			\node[anchor=north] at (axis cs:5.9, 2.2) {$r(t) \approx \frac{n}{\Delta t}$};
+
+		\end{axis}
+	\end{tikzpicture}
 \end{figure}
 
 If we let the window size get infinitely small, then each window either catches a spike, or it doesn't. In this case, the firing rate is zero everywhere, apart from at the exact locations of a spike, at which it is infinite. The function that describes this is the dirac delta function $\delta (t)$. This function has the important property that it integrates to 1, and can therefore be used to 'pick out' values of a continuous function from inside an integral:
 
 \begin{equation*}
-    \int dt' \delta (t-t') f(t') = f(t)
+	\int dt' \delta (t-t') f(t') = f(t)
 \end{equation*}
 
 We can now represent our spike train as a continuous function $\rho (t)$, rather than just a set of spike times, given by:
 
 \begin{equation*}
-    \rho (t) = \sum_{i=1}^n \delta(t-t_i)
+	\rho (t) = \sum_{i=1}^n \delta(t-t_i)
 \end{equation*}
 
 For clarity, $\rho(t)$ is the particular function that we measure when recording a neuron's spiking activity. This is generated stochastically from the true underlying firing rate $r(t)$, which doesn't spike but gives a varying firing \textit{rate} over time.\\
@@ -106,71 +106,71 @@ We now need to look at how to convert between these two representations of a neu
 If we could record an infinite number of trials, then our simple window method above would converge to the true firing rate as the window size gets infinitely small. In practise, however, we generally need to estimate the firing rate from a finite number of trials. To do this, we smooth out our set of spike trains by performing a \textit{convolution} with a \textit{window} function $w(\tau)$. A convolution refers to the process of integrating our function of interest with a small sliding window function, sometimes called a kernel, as follows:\\
 
 \begin{equation*}
-    r(t) \approx \int_{- \infty}^{\infty} d\tau w(\tau) \rho(t-\tau)
+	r(t) \approx \int_{- \infty}^{\infty} d\tau w(\tau) \rho(t-\tau)
 \end{equation*}
 
 If you think carefully about this equation, you see that at time t, we centre our window function at t, then compute the values of the window function at all neighbouring spikes, and add their values to give an estimate of the firing rate, as shown below. Also note that in practise, you can average this method over many trials where you have recorded the same neuron to get better results.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={Time (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10
-        ]
-        
-        % Spike train for a single neuron (small vertical lines)
-        \addplot+[ycomb, thick, mark=|, mark size=2pt] 
-            coordinates {
-                (0, 0.5)
-                (1, 0.5)
-                (2.5, 0.5)
-                (3, 0.5)
-                (4.5, 0.5)
-                (5, 0.5)
-                (6.5, 0.5)
-                (7, 0.5)
-                (8.5, 0.5)
-                (9, 0.5)
-            };
-        
-        % Gaussian kernel
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            samples=50,
-            unbounded coords=jump,
-            smooth
-        ] {exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={Time (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10
+			]
 
-        \node[anchor=north] at (axis cs:9, 1.1) {Gaussian kernel};
+			% Spike train for a single neuron (small vertical lines)
+			\addplot+[ycomb, thick, mark=|, mark size=2pt]
+			coordinates {
+					(0, 0.5)
+					(1, 0.5)
+					(2.5, 0.5)
+					(3, 0.5)
+					(4.5, 0.5)
+					(5, 0.5)
+					(6.5, 0.5)
+					(7, 0.5)
+					(8.5, 0.5)
+					(9, 0.5)
+				};
 
-        \node[anchor=south, font=\tiny] at (axis cs:2.5, 1) {$0.02$};
-        \node[anchor=south, font=\tiny] at (axis cs:3, 1) {$0.05$};
-        \node[anchor=south, font=\tiny] at (axis cs:4.5, 1) {$0.35$};
-        \node[anchor=south, font=\tiny] at (axis cs:5, 1) {$0.40$};
-        \node[anchor=south, font=\tiny] at (axis cs:6.5, 1) {$0.13$};
-        \node[anchor=south, font=\tiny] at (axis cs:7, 1) {$0.05$};
-        
-        \end{axis}
-    
-    \end{tikzpicture}
+			% Gaussian kernel
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				samples=50,
+				unbounded coords=jump,
+				smooth
+			] {exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+
+			\node[anchor=north] at (axis cs:9, 1.1) {Gaussian kernel};
+
+			\node[anchor=south, font=\tiny] at (axis cs:2.5, 1) {$0.02$};
+			\node[anchor=south, font=\tiny] at (axis cs:3, 1) {$0.05$};
+			\node[anchor=south, font=\tiny] at (axis cs:4.5, 1) {$0.35$};
+			\node[anchor=south, font=\tiny] at (axis cs:5, 1) {$0.40$};
+			\node[anchor=south, font=\tiny] at (axis cs:6.5, 1) {$0.13$};
+			\node[anchor=south, font=\tiny] at (axis cs:7, 1) {$0.05$};
+
+		\end{axis}
+
+	\end{tikzpicture}
 
 
-    \begin{align*}
-        r(5) &\approx 0.02 + 0.05 + 0.35 + 0.40 + 0.13 + 0.05\\
-        &\approx 1 \text{Hz}
-    \end{align*}
+	\begin{align*}
+		r(5) & \approx 0.02 + 0.05 + 0.35 + 0.40 + 0.13 + 0.05 \\
+		     & \approx 1 \text{Hz}
+	\end{align*}
 \end{figure}
 
 Since our Gaussian window function varies smoothly, the effect is to smooth out the firing rate function. Smoothing the firing rate captures the fact that a spike train is generated stochastically from the firing rate - the smoother we make it, by widening the window width, the more we get a general rate, and the less the precise spike timings matter. The effects of using different window functions is shown in Figure 1.4 in the book.
@@ -182,8 +182,8 @@ Having seen how we can estimate the firing rate from a set of recorded spike tra
 First of all, note that we can easily calculate the mean number of spikes in a trial, as follows:
 
 \begin{align*}
-    \mathbb{E} [N] &= \int_0^T r(t)dt\\
-    &= rT \text{ if r constant}
+	\mathbb{E} [N] & = \int_0^T r(t)dt          \\
+	               & = rT \text{ if r constant}
 \end{align*}
 
 However, this tells us nothing about the distribution of spikes around this mean rate. The most basic way to generate spikes is to use a Poisson process. Consider the probability of there being a spike in the window $t$ to $t+\Delta t$. As $\Delta t \to 0$, the probability of there being 2 or more spikes in this box falls to 0, so we only need to consider the possibility of there being 0 or 1 spikes in this box. This is just a coin flip, or Bernoulli trial, with the probability of there being a spike being given by $P(\text{spike})=r(t)\Delta t$. Computationally, you could simulate a spike train by splitting your trial into a finite set of small boxes of size $\Delta t$, and putting a spike in each box with this probability.\\
@@ -191,7 +191,7 @@ However, this tells us nothing about the distribution of spikes around this mean
 In the case of a homogeneous firing rate - that is, one that is constant for the whole trial, we can say a bit more about the distribution of the number of spikes in a trial. This is done by counting all the different ways we can get n spikes in a finite set of boxes in a trial using combinatorics, and adding their probabilities, then letting our box sizes tend to zero, while using something called Sterling's approximation to give the following nice result:
 
 \begin{equation*}
-    P[N=n] = \frac{(rT)^n}{n!} \exp(-rT)
+	P[N=n] = \frac{(rT)^n}{n!} \exp(-rT)
 \end{equation*}
 
 Which is the Poisson distribution with mean $rT$.\\
@@ -215,62 +215,62 @@ Another fundamental concept is the spike-triggered average. This is a way of cha
 At present, we once again have a parameterised stimulus, which we now allow to vary with with time, $s(t)$. We won't worry exactly how it varies - this will be considered in the next chapter. All we need to do to compute the spike-triggered average, is to record a neuron's activity alongside this varying stimulus in a trial. We then pick a window of finite time, and take the mean of the changing stimulus across all the windows preceding all spikes in the recording. We then average this result over any trials. This is described by the following equation:
 
 \begin{equation*}
-    C(\tau) = \langle\frac{1}{n}\sum_{i=1}^n s(t_i-\tau)\rangle
+	C(\tau) = \langle\frac{1}{n}\sum_{i=1}^n s(t_i-\tau)\rangle
 \end{equation*}
 
 Equation (1.20) also covers the integral forms of this equation in terms of $\rho(t)$ and $r(t)$. It's actually really useful to look at these to check your understanding of our previous discussion on firing rates vs spike trains. Below also shows a visual representation of the spike-triggered average. All we do is take the stimulus in the windows preceding each spike, as shaded, and average them, to obtain $C(\tau)$.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={Time (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        % Spike train for a single neuron (small vertical lines)
-        \addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue] 
-            coordinates {
-                (1, 1.5)
-                (4, 1.5)
-                (7, 1.5)
-            };
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={Time (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10
+			]
 
-        % Shaded STA windows preceding each spike
-        \foreach \x in {1, 4, 7} {
-            \addplot [
-                domain=\x-0.5:\x,
-                samples=2,
-                fill=stawindowcolor,
-                fill opacity=0.3,
-                draw=none
-            ] {1.8} \closedcycle;
-        }
+			% Spike train for a single neuron (small vertical lines)
+			\addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue]
+			coordinates {
+					(1, 1.5)
+					(4, 1.5)
+					(7, 1.5)
+				};
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+			% Shaded STA windows preceding each spike
+			\foreach \x in {1, 4, 7} {
+					\addplot [
+						domain=\x-0.5:\x,
+						samples=2,
+						fill=stawindowcolor,
+						fill opacity=0.3,
+						draw=none
+					] {1.8} \closedcycle;
+				}
 
-        \node[anchor=north] at (axis cs:9.5, 1.1) {$s(t)$};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=north] at (axis cs:9.5, 1.1) {$s(t)$};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
@@ -287,55 +287,55 @@ To measure how much two functions correlate, we can multiply them and integrate 
 Say we want to compute how much the firing rate of a neuron correlates with a stimulus over the course of a trial. We are interested in the correlation of the neuron's activity with the stimulus at the same point in time, but also the correlation of the firing rate with values of the stimulus preceding the neuron's activity, since the neuron is influenced by the stimulus over a window of time prior to it responding. Therefore, we perform this correlation over successive shifts of the stimulus in time, and record the value as a function of this shift, rather than a single value, like so:
 
 \begin{equation*}
-    Q_{rs}(\tau) = \frac{1}{T} \int_0^Tdt \text{r}(t)s(t+\tau)
+	Q_{rs}(\tau) = \frac{1}{T} \int_0^Tdt \text{r}(t)s(t+\tau)
 \end{equation*}
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={Time (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={Time (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10
+			]
 
-        \addplot[
-            domain=-1:9,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {1.5 + 0.15 * cos(15*pi*8*(x+1)) + 0.2 * rand};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \node[anchor=north] at (axis cs:9.9, 1.6) {$s(t+\tau)$};
-        \node[anchor=north] at (axis cs:10.5, 0.5) {$r(t)$};
-        \node[anchor=north] at (axis cs:5, 1.1) {$\times$};
-        
-        % Add a curly bracket for displacement
-        \draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt},yshift=0pt] 
-            (axis cs:-1, 0) -- (axis cs:0, 0) node[midway,yshift=-18pt]{\footnotesize $\tau=1$s};
+			\addplot[
+				domain=-1:9,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {1.5 + 0.15 * cos(15*pi*8*(x+1)) + 0.2 * rand};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=north] at (axis cs:9.9, 1.6) {$s(t+\tau)$};
+			\node[anchor=north] at (axis cs:10.5, 0.5) {$r(t)$};
+			\node[anchor=north] at (axis cs:5, 1.1) {$\times$};
+
+			% Add a curly bracket for displacement
+			\draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt},yshift=0pt]
+			(axis cs:-1, 0) -- (axis cs:0, 0) node[midway,yshift=-18pt]{\footnotesize $\tau=1$s};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
@@ -344,74 +344,74 @@ We note the relationship here to the spike-triggered average. For the spike-trig
 Rewriting the spike-triggered average in integral form (recalling that $\rho$ rewrites a spike train as a continuous function):
 
 \begin{align*}
-    C(\tau) =& \frac{1}{\langle n \rangle} \int_0^Tdt \langle \rho(t)\rangle s(t-\tau)\\
-    =& \frac{1}{\langle n \rangle} \int_0^Tdt \text{r}(t) s(t-\tau)\\
-    =& \frac{1}{\langle r \rangle} Q_{rs}(-\tau)
+	C(\tau) = & \frac{1}{\langle n \rangle} \int_0^Tdt \langle \rho(t)\rangle s(t-\tau) \\
+	=         & \frac{1}{\langle n \rangle} \int_0^Tdt \text{r}(t) s(t-\tau)            \\
+	=         & \frac{1}{\langle r \rangle} Q_{rs}(-\tau)
 \end{align*}
 
 It is also useful to define the stimulus autocorrelation function, which is the correlation of the stimulus with itself:
 
 \begin{equation*}
-    Q_{ss}(\tau) = \int_0^T dt s(t) s(t+\tau)
+	Q_{ss}(\tau) = \int_0^T dt s(t) s(t+\tau)
 \end{equation*}
 
 The following graph shows how we shift the function, multiply it by itself, and integrate over time.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={Time (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \pgfmathsetseed{1234}
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={Time (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10
+			]
 
-        \pgfmathsetseed{1234}
-        \addplot[
-            domain=-1:9,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {1.5 + 0.3 * sin(2*pi*10*(x+1)) + 0.2 * rand};
+			\pgfmathsetseed{1234}
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \node[anchor=north] at (axis cs:9.9, 1.6) {$s(t+\tau)$};
-        \node[anchor=north] at (axis cs:10.5, 0.5) {$s(t)$};
-        \node[anchor=north] at (axis cs:5, 1.1) {$\times$};
-        
-        % Add a curly bracket for displacement
-        \draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt},yshift=0pt] 
-            (axis cs:-1, 0) -- (axis cs:0, 0) node[midway,yshift=-18pt]{\footnotesize $\tau=1$s};
+			\pgfmathsetseed{1234}
+			\addplot[
+				domain=-1:9,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {1.5 + 0.3 * sin(2*pi*10*(x+1)) + 0.2 * rand};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=north] at (axis cs:9.9, 1.6) {$s(t+\tau)$};
+			\node[anchor=north] at (axis cs:10.5, 0.5) {$s(t)$};
+			\node[anchor=north] at (axis cs:5, 1.1) {$\times$};
+
+			% Add a curly bracket for displacement
+			\draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt},yshift=0pt]
+			(axis cs:-1, 0) -- (axis cs:0, 0) node[midway,yshift=-18pt]{\footnotesize $\tau=1$s};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
 Of particular importance is a white noise stimulus. This is a stimulus that is completely uncorrelated with itself - knowing its value at one time point tells you nothing about its value at any other timepoint. Its autocorrelation function is therefore zero for almost all values of $\tau$ - except for at zero, where the integral actually blows up to infinity. We represent this with a dirac delta function, which we met when studying spike trains. This is a standard result in signal processing, but understanding it fully requires diving into Fourier analysis, which we don't want to do now, so we just state that the following is the autocorrelation function for a white noise stimulus, where $\sigma_s$ is the signal's power:
 
 \begin{equation*}
-    Q_{ss}(\tau) = \sigma_s^2 \delta(\tau)
+	Q_{ss}(\tau) = \sigma_s^2 \delta(\tau)
 \end{equation*}
 
 \subsection{Reverse-correlation methods}
@@ -419,20 +419,20 @@ Of particular importance is a white noise stimulus. This is a stimulus that is c
 We now have the correct toolkit to start studying how to predict a neuron's activity given the values of a stimulus that changes over time. This is actually a regression problem, and we will look at what amounts to linear regression. In regular linear regression, you have a finite set of input vectors and target values $\{(\bm{x}_i, y_i) | i=1:n\}$. We want to find a weight vector $\bm{w}$ and bias $b$ that can be used to estimate the target from an unseen input vector as follows:
 
 \begin{equation*}
-    y \approx \bm{w}^T\bm{x} + b
+	y \approx \bm{w}^T\bm{x} + b
 \end{equation*}
 
 The solution will only ever be approximate as we assume there to be Gaussian noise added to all measurements. We solve this by minimising the least squares error on our available data:
 
 \begin{equation*}
-    \bm{w}, b = \text{argmin}_{\bm{w},b} \sum_{i=1}^n (y_i - \bm{w}^T\bm{x}_i - b)^2
+	\bm{w}, b = \text{argmin}_{\bm{w},b} \sum_{i=1}^n (y_i - \bm{w}^T\bm{x}_i - b)^2
 \end{equation*}
 
 In the special case of whitened input data, which means that the input data has been normalised to have zero mean and covariance proportional to the identity matrix, the solution to this problem is given by:
 
 \begin{align*}
-    \bm{w} &= \frac{1}{n\sigma^2} \sum_{i=1}^n y_i \bm{x}_i\\
-    b &= \frac{1}{n} \sum_{i=1}^n y_i
+	\bm{w} & = \frac{1}{n\sigma^2} \sum_{i=1}^n y_i \bm{x}_i \\
+	b      & = \frac{1}{n} \sum_{i=1}^n y_i
 \end{align*}
 
 Where $\sigma^2$ is the input data variance. (Note this is also tractable in the case of non-whitened data, which is the solution you will typically see in textbooks. Also note that typically 'whitened' also means $\sigma^2=1$ but I keep a symmetric variance here for analogy later.)\\
@@ -440,74 +440,74 @@ Where $\sigma^2$ is the input data variance. (Note this is also tractable in the
 Now, in the case of neural encoding, we want to calculate the firing rate of a neuron at time t, $r(t)$, given the value of the stimulus in a window leading up to the time t, as follows:\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={$\tau$ (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10,
-            x dir=reverse,
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={$\tau$ (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10,
+				x dir=reverse,
+			]
 
-        \node[anchor=north] at (axis cs:10, 1) {$s(t-\tau)$};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \addplot+[ycomb, thick, mark=|, mark size=2pt, color=black] 
-            coordinates {
-                (0, 1)
-            };
-            \node at (axis cs:-0.05,1) [anchor=west, font=\footnotesize] {Predict $r(t)$ here given history of stimulus};
+			\node[anchor=north] at (axis cs:10, 1) {$s(t-\tau)$};
 
-        
-        \end{axis}
-    \end{tikzpicture}
+			\addplot+[ycomb, thick, mark=|, mark size=2pt, color=black]
+			coordinates {
+					(0, 1)
+				};
+			\node at (axis cs:-0.05,1) [anchor=west, font=\footnotesize] {Predict $r(t)$ here given history of stimulus};
+
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
 Now, the best way to think about this problem is that the values of $s(t-\tau)$ in the window leading up to the time $t$ at which we want to predict the firing rate form the input vector for our linear regression, and $r(t)$ itself forms the target scalar. It may seem strange that we are referring to a function as a vector, however, this is actually very common. You should think of the vector $\bm{s}$ as being labelled by a continuous variable $\tau$, so it has continuously many components, compared to a column vector $\bm{x}$ which is discretely labelled. Additionally, $t$ takes the place of the index $i$ in the linear regression problem - where before, we had a discrete number of input vectors and targets, here we use the continuously indexed $r(t)$ as targets with the stimulus values in the window leading up to $t$ as the input vectors. So there are two senses in which we have extended linear regression to a continuous domain.\\
 
 \begin{align*}
-    \bm{x}_i &\rightarrow s(t-\tau)\\
-    y_i &\rightarrow r(t)\\
-    i &\rightarrow t\\
-    \tau &\rightarrow \text{column index of } \bm{x}\\
+	\bm{x}_i & \rightarrow s(t-\tau)                      \\
+	y_i      & \rightarrow r(t)                           \\
+	i        & \rightarrow t                              \\
+	\tau     & \rightarrow \text{column index of } \bm{x} \\
 \end{align*}
 
 Many equations from the discrete case can be translated into the continuous case by replacing the appropriate sum over the vector components with an integral over the corresponding function's continuous label. Therefore, a dot product between two vectors becomes an integral of the product of the two functions. We therefore replace the weight matrix $\bm{w}$ with a function $D(\tau)$. This is referred to as the filter.
 
 \begin{align*}
-    D(\tau) &\rightarrow \bm{w}\\
-    r_0 &\rightarrow b
+	D(\tau) & \rightarrow \bm{w} \\
+	r_0     & \rightarrow b
 \end{align*}
 
 The linear equation we want to solve for therefore becomes the integral of the weight function times the stimulus function, integrated over the the stimulus' history:
 
 \begin{equation*}
-    r_{\text{est}}(t) = r_0 + \int_0^\infty d\tau D(\tau)s(t-\tau)
+	r_{\text{est}}(t) = r_0 + \int_0^\infty d\tau D(\tau)s(t-\tau)
 \end{equation*}
 
 And our training dataset becomes the continuous set of all such $(r(t), s(t-\tau))$ pairs present in the recording. Just like before, we minimise the least squares error on the training dataset, which takes the following form:
 
 \begin{equation*}
-    E = \frac{1}{T} \int_0^T dt (r(t) - r_{\text{est}}(t))^2
+	E = \frac{1}{T} \int_0^T dt (r(t) - r_{\text{est}}(t))^2
 \end{equation*}
 
 Note also how the normalising constant has changed from the number of datapoints $N$ to the continuous length of the trial $T$.\\
@@ -515,68 +515,68 @@ Note also how the normalising constant has changed from the number of datapoints
 Minimising this equation properly is non-trivial, and requires something called a functional derivative from a subject called the calculus of variations. However, in this case (and definitely don't assume this will always be true!), our solution holds in direct analogy with standard linear regression for the specific case of a white noise stimulus. Previously, we whitened our input data, so that the vectors $\bm{x}$ have zero mean and symmetric variance. Here, we use a white-noise stimulus, which is the continuous analog of this, giving the solution:
 
 \begin{align*}
-    D(\tau) &= \frac{1}{T\sigma_s^2} \int_0^T dt \text{r}(t) s(t-\tau)\\
-    r_0 &= \frac{1}{T} \int_0^T dt \text{r}(t)
+	D(\tau) & = \frac{1}{T\sigma_s^2} \int_0^T dt \text{r}(t) s(t-\tau) \\
+	r_0     & = \frac{1}{T} \int_0^T dt \text{r}(t)
 \end{align*}
 
 Now, this equation should look familiar. It is in fact, almost exactly the spike-triggered average, with slightly different normalising constants. Substituting these gives us:
 
 \begin{equation*}
-    D(\tau) = \frac{\langle r \rangle C(\tau)}{\sigma_s^2}
+	D(\tau) = \frac{\langle r \rangle C(\tau)}{\sigma_s^2}
 \end{equation*}
 
 This is exactly why the spike-triggered average is a useful thing to calculate. It tells us the optimal linear filter for predicting a neuron's activity from a stimulus.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={$\tau$ (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10,
-            x dir=reverse,
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={$\tau$ (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10,
+				x dir=reverse,
+			]
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {1.5 + 0.2 * cos(2*pi*20*x) + 0.05 * rand + 1.5 * exp(-(x-3)^2)};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \node[anchor=north] at (axis cs:10, 1) {$s(t-\tau)$};
-        \node[anchor=north] at (axis cs:10, 2) {$D(\tau)$};
-        \node[anchor=north] at (axis cs:5, 1.1) {$\times$};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {1.5 + 0.2 * cos(2*pi*20*x) + 0.05 * rand + 1.5 * exp(-(x-3)^2)};
 
-        \addplot+[ycomb, thick, mark=|, mark size=2pt, color=black] 
-            coordinates {
-                (0, 1)
-            };
-        \node at (axis cs:-0.05,1) [anchor=west, font=\footnotesize] {$r_{\text{est}}(t) = r_0 + \int_0^\infty d\tau D(\tau)s(t-\tau)$};
+			\node[anchor=north] at (axis cs:10, 1) {$s(t-\tau)$};
+			\node[anchor=north] at (axis cs:10, 2) {$D(\tau)$};
+			\node[anchor=north] at (axis cs:5, 1.1) {$\times$};
 
-        
-        \end{axis}
-    \end{tikzpicture}
+			\addplot+[ycomb, thick, mark=|, mark size=2pt, color=black]
+			coordinates {
+					(0, 1)
+				};
+			\node at (axis cs:-0.05,1) [anchor=west, font=\footnotesize] {$r_{\text{est}}(t) = r_0 + \int_0^\infty d\tau D(\tau)s(t-\tau)$};
+
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
@@ -585,61 +585,61 @@ The case of a non-whitened stimulus is more complex, and requires the use of Fou
 It's also important to discuss the limitations associated with a linear model. A linear model assumes the response of a neuron is proportional to the amount of overlap its actual stimulus has with its most effective stimulus. We give here a graphical demonstration of what this entails.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={$\tau$ (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=5,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:5,
-            x dir=reverse,
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.2 * cos(2*pi*20*x) + 0.05 * rand + 1.5 * exp(-(x-3)^2)};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={$\tau$ (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=5,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:5,
+				x dir=reverse,
+			]
 
-        \node[anchor=north] at (axis cs:5, 1) {$D(\tau)$};
-        \node[anchor=west] at (axis cs:0, 1) {Optimal stimulus};
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.2 * cos(2*pi*20*x) + 0.05 * rand + 1.5 * exp(-(x-3)^2)};
 
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {2.5 + 0.4 * cos(2*pi*15*x) + 0.2 * rand + 1 * exp(-(x-3)^2/0.25)};
+			\node[anchor=north] at (axis cs:5, 1) {$D(\tau)$};
+			\node[anchor=west] at (axis cs:0, 1) {Optimal stimulus};
 
-        \node[anchor=north] at (axis cs:5, 3) {$s(t-\tau)$};
-        \node[anchor=west] at (axis cs:0, 3) {High response};
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {2.5 + 0.4 * cos(2*pi*15*x) + 0.2 * rand + 1 * exp(-(x-3)^2/0.25)};
 
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {4.5 - 0.4 * cos(2*pi*20*x) + 0.2 * rand + 1 * exp(-(x-1)^2/0.2)};
+			\node[anchor=north] at (axis cs:5, 3) {$s(t-\tau)$};
+			\node[anchor=west] at (axis cs:0, 3) {High response};
 
-        \node[anchor=north] at (axis cs:5, 5) {$s(t-\tau)$};
-        \node[anchor=west] at (axis cs:0, 5) {Low response};
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {4.5 - 0.4 * cos(2*pi*20*x) + 0.2 * rand + 1 * exp(-(x-1)^2/0.2)};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=north] at (axis cs:5, 5) {$s(t-\tau)$};
+			\node[anchor=west] at (axis cs:0, 5) {Low response};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
@@ -658,19 +658,19 @@ Most of this chapter is concerned with the early visual system. This is because 
 So far, we have only studied stimuli that take scalar values. This could include, for example, the total intensity of light in a room. Most real-world stimuli are more complex than this, however, so we need to describe them in more complex ways. A natural extension would be to consider vector-valued stimuli. In this chapter, however, since we are studying the visual system, we actually consider stimuli that vary over a 2D plane, such as a 2D image. Such stimuli can be described by their value not just over time, but over the x-,y-axes, like $s(x,y,t)$. Fortunately, all the results from before transfer very easily to this case. For example, the spike-triggered average is defined:
 
 \begin{equation*}
-    C(x,y,\tau) = \frac{1}{\langle n \rangle} \left \langle \sum_{i=1}^n s(x,y,t_i-\tau) \right \rangle
+	C(x,y,\tau) = \frac{1}{\langle n \rangle} \left \langle \sum_{i=1}^n s(x,y,t_i-\tau) \right \rangle
 \end{equation*}
 
 And the linear filter is defined:
 
 \begin{equation*}
-    L(t) = \int_0^\infty d\tau\int dx dy D(x,y,\tau)s(x,y,t-\tau)
+	L(t) = \int_0^\infty d\tau\int dx dy D(x,y,\tau)s(x,y,t-\tau)
 \end{equation*}
 
 Where the kernel, also called the neuron's space-time receptive field, is given by:
 
 \begin{equation*}
-    D(x,y,\tau) = \frac{\langle r \rangle C(x,y,\tau)}{\sigma_s^2}
+	D(x,y,\tau) = \frac{\langle r \rangle C(x,y,\tau)}{\sigma_s^2}
 \end{equation*}
 
 This can be used just like before to predict a neuron's activity from a stimulus, through either the linear or static non-linear models discussed before. The neuron's receptive field describes the region of sensory space, which in this case consists of 2D images, to which the neuron responds. It is more likely to respond to stimuli similar or overlapping with its receptive field. This might be slightly easier to conceptualise in the case of a separable receptive field, where: $D(x,y,\tau)=D(\tau)D(x,y)$. You can think of $D(x,y)$ as being the image to which the cell is most responsive.\\
@@ -694,185 +694,185 @@ In the Bayesian approach, we assume a generative model of the neural response gi
 Previously we studied tuning curves, which give the mean firing rate of a neuron given a stimulus. This amounted to just fitting some parameterised curve to the measured $r, s$ pairs, such that $f_\theta(s) \approx \langle r \rangle$. Tuning curves can take many different functional forms, as we have seen. Now all we are doing is extending this idea to the full probability distribution of the neuron's firing rate given a stimulus. Often, we will use the Poisson distribution for this, which, as we saw in chapter 1, gives a good approximation of the distribution of the spike-count rate over the course of a trial, and has the benefit of not needing any additional parameters to fit beyond the tuning curve, as it is characterised entirely by its mean. Other distributions are possible though; for example, you may come across tuning curve plus isotropic (uniform) Gaussian noise models, or models where the noise is proportional to the mean firing rate.
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=11cm,
-            height=6cm,
-            xlabel={Stimulus value $s$},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            ylabel={Firing rate $\langle r \rangle$},
-            axis y line=left,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=-2, ymax=10,
-            clip=false,
-            domain=0:10,
-            xtick=\empty,
-            ytick=\empty
-        ]
-        
-        % Gaussian kernel
-        \addplot[
-            name path=main,
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            samples=50,
-            unbounded coords=jump,
-            smooth
-        ] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=11cm,
+				height=6cm,
+				xlabel={Stimulus value $s$},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				ylabel={Firing rate $\langle r \rangle$},
+				axis y line=left,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=-2, ymax=10,
+				clip=false,
+				domain=0:10,
+				xtick=\empty,
+				ytick=\empty
+			]
 
-        \addplot[
-            name path=top,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+			% Gaussian kernel
+			\addplot[
+				name path=main,
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				samples=50,
+				unbounded coords=jump,
+				smooth
+			] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            name path=bottom,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+			\addplot[
+				name path=top,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot [
-            thick,
-            color=blue,
-            fill=blue, 
-            fill opacity=0.1
-        ]
-        fill between[
-            of=top and bottom
-        ];
+			\addplot[
+				name path=bottom,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (3.5, 2) (3.5, 4.7)
-        };
+			\addplot [
+				thick,
+				color=blue,
+				fill=blue,
+				fill opacity=0.1
+			]
+			fill between[
+					of=top and bottom
+				];
 
-        \draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt}] 
-            (axis cs:4,2) -- (axis cs:4,4.7) node[midway,xshift=10pt,right] {\footnotesize $\text{ }p(\bm{r}|s)$};
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(3.5, 2) (3.5, 4.7)
+				};
 
-        \end{axis}
-    
-    \end{tikzpicture}
+			\draw[decorate,decoration={brace,amplitude=10pt,mirror,raise=2pt}]
+			(axis cs:4,2) -- (axis cs:4,4.7) node[midway,xshift=10pt,right] {\footnotesize $\text{ }p(\bm{r}|s)$};
+
+		\end{axis}
+
+	\end{tikzpicture}
 
 \end{figure}
 
 
 Recall, for example, the form of the Poisson distribution, assuming independence between different neurons, and where each neuron $a$ is described by a different tuning curve $f_a(s)$:\\
 \begin{equation*}
-    p(\bm{r}|s) = \prod_a \frac{e^{-f_a(s)T}(f_a(s)T)^{r_aT}}{(r_aT)!}
+	p(\bm{r}|s) = \prod_a \frac{e^{-f_a(s)T}(f_a(s)T)^{r_aT}}{(r_aT)!}
 \end{equation*}
 
 To be very clear here, the term $f_a(s)T$ is the mean spike-count of neuron $a$ given our tuning curve, and $r_aT$ is the spike-count we actually measure.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=11cm,
-            height=6cm,
-            xlabel={Stimulus value $s$},
-            xlabel style={at={(axis description cs:0.5,-10)}, anchor=north},
-            ylabel={Firing rate $\langle r \rangle$},
-            axis y line=left,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=-2, ymax=10,
-            clip=false,
-            domain=0:10,
-            xtick=\empty,
-            ytick=\empty
-        ]
-        
-        % Gaussian kernel
-        \addplot[
-            name path=main,
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            samples=50,
-            unbounded coords=jump,
-            smooth
-        ] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=11cm,
+				height=6cm,
+				xlabel={Stimulus value $s$},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				ylabel={Firing rate $\langle r \rangle$},
+				axis y line=left,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=-2, ymax=10,
+				clip=false,
+				domain=0:10,
+				xtick=\empty,
+				ytick=\empty
+			]
 
-        \addplot[
-            name path=top,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+			% Gaussian kernel
+			\addplot[
+				name path=main,
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				samples=50,
+				unbounded coords=jump,
+				smooth
+			] {10*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            name path=bottom,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
+			\addplot[
+				name path=top,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {1+11*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot [
-            thick,
-            color=blue,
-            fill=blue, 
-            fill opacity=0.1
-        ]
-        fill between[
-            of=top and bottom
-        ];
+			\addplot[
+				name path=bottom,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {-1+9*exp(-((x-5)^2)/(2*1^2))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (2.8, 2) (3.5, 2)
-        };
+			\addplot [
+				thick,
+				color=blue,
+				fill=blue,
+				fill opacity=0.1
+			]
+			fill between[
+					of=top and bottom
+				];
 
-        \draw[decorate,decoration={brace,amplitude=10pt,raise=2pt}] 
-            (axis cs:2.8,3) -- (axis cs:3.55,3)
-            node[midway, above=15pt] {\footnotesize $p(s|\bm{r})$};
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(2.8, 2) (3.5, 2)
+				};
 
-        \end{axis}
-    
-    \end{tikzpicture}
+			\draw[decorate,decoration={brace,amplitude=10pt,raise=2pt}]
+			(axis cs:2.8,3) -- (axis cs:3.55,3)
+			node[midway, above=15pt] {\footnotesize $p(s|\bm{r})$};
+
+		\end{axis}
+
+	\end{tikzpicture}
 
 \end{figure}
 
 So our procedure at this point is to fit the parameters of a tuning curve for each neuron to the measured data, and use this to describe a generative model that gives a distribution of firing rates for each neuron given a stimulus. Now the decoding task is to estimate the stimulus \textit{given} the firing rates. This is done using Bayes' theorem, which states that the posterior distribution of the stimulus given the firing rates is proportional to the likelihood of the firing rates given the stimulus, times the prior distribution of the stimulus:
 
 \begin{align*}
-    p(s|\bm{r}) &= \frac{p(\bm{r}|s)p(s)}{p(\bm{r})}\\[10pt]
-    \text{Posterior} &= \frac{\text{Likelihood} \times \text{Prior}}{\text{Evidence}}
+	p(s|\bm{r})      & = \frac{p(\bm{r}|s)p(s)}{p(\bm{r})}                             \\[10pt]
+	\text{Posterior} & = \frac{\text{Likelihood} \times \text{Prior}}{\text{Evidence}}
 \end{align*}
 
 The prior term, $p(s)$, represents our 'best guess' distribution over the stimulus values before we have any knowledge of the neural response. For example, if we know the stimulus takes value $a$ two-thirds of the time, and $b$ one-third of the time, then we could set $p(s=a)=2/3$ and $p(s=b)=1/3$. If no such information is available, then we typically set our prior to a uniform distribution, or some other distribution that is relatively uninformative - typically, for relatively sensible priors, the results won't be affected too much.\\
@@ -880,7 +880,7 @@ The prior term, $p(s)$, represents our 'best guess' distribution over the stimul
 The evidence term is calculated by marginalising over the stimulus, and acts as a normalising constant. In full:
 
 \begin{equation*}
-    p(\bm{r}) = \int ds p(\bm{r}|s)p(s)
+	p(\bm{r}) = \int ds p(\bm{r}|s)p(s)
 \end{equation*}
 
 As we can see, dividing by this term just ensures that we have a well-defined probability distribution, as integrals over a probability distribution must be equal to 1.\\
@@ -888,7 +888,7 @@ As we can see, dividing by this term just ensures that we have a well-defined pr
 The full Bayesian approach would be to just leave things here: given a measured neural response, we return the probability distribution over possible stimulus values given by Bayes' theorem. However, there are cases where we require a point estimate of the stimulus, ie, a specific value of $s$ that we determine to be the 'best' estimate of $s$ given $\bm{r}$. One method of doing this is to take the mode of the posterior distribution - that is, the value of $s$ that maximises the posterior distribution. This is known as MAP estimation (maximum a posteriori). It has the benefit of us not needing to calculate the normalising constant, which is typically analytically intractable, and can be computationally expensive to approximate. Note that we can plug our posterior into any monotonic (always increasing) function, and the MAP estimate will be identical. Typically, we therefore maximise the log posterior, as the logarithm function has nice algebraic properties:
 
 \begin{equation*}
-    s_{MAP} = \text{argmax}_s \log p(\bm{r}|s) + \log p(s)
+	s_{MAP} = \text{argmax}_s \log p(\bm{r}|s) + \log p(s)
 \end{equation*}
 
 And we see that we can safely ignore the $-\log p(\bm{r})$ term, as it does not depend on $s$.\\
@@ -904,142 +904,142 @@ Fisher information is a measure of how much information a neuron, or population 
 Consider, once more, the tuning curve of a neuron. Imagine that we want to decode a stimulus value in the presence of noise. The diagram below shows the deviation of our decoding at a region where the tuning curve is steep, and a region where the tuning curve is shallow. The key takeaway from this section is that neurons are maximally informative about a stimulus at regions where their tuning curve is steepest. The diagram makes this obvious, but it may be somewhat surprising at first, as we would naively assume neurons are maximally informative where they are responding the most.
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=11cm,
-            height=9cm,
-            xlabel={Stimulus value $s$},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            ylabel={Firing rate $\langle r \rangle$},
-            axis y line=left,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=-2, ymax=10,
-            clip=false,
-            domain=0:10,
-            xtick=\empty,
-            ytick=\empty
-        ]
-        
-        % Gaussian kernel
-        \addplot[
-            name path=main,
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            samples=50,
-            unbounded coords=jump,
-            smooth
-        ] {10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+	\centering
+	\begin{tikzpicture}
+		\begin{axis}[
+				width=11cm,
+				height=9cm,
+				xlabel={Stimulus value $s$},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				ylabel={Firing rate $\langle r \rangle$},
+				axis y line=left,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=-2, ymax=10,
+				clip=false,
+				domain=0:10,
+				xtick=\empty,
+				ytick=\empty
+			]
 
-        \addplot[
-            name path=top,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+			% Gaussian kernel
+			\addplot[
+				name path=main,
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				samples=50,
+				unbounded coords=jump,
+				smooth
+			] {10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            name path=bottom,
-            domain=0:10,
-            samples=100,
-            thin,
-            gray,
-            samples=50,
-            unbounded coords=jump,
-            smooth,
-            opacity=0.1
-        ] {-1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
+			\addplot[
+				name path=top,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot [
-            thick,
-            color=blue,
-            fill=blue, 
-            fill opacity=0.1
-        ]
-        fill between[
-            of=top and bottom
-        ];
+			\addplot[
+				name path=bottom,
+				domain=0:10,
+				samples=100,
+				thin,
+				gray,
+				samples=50,
+				unbounded coords=jump,
+				smooth,
+				opacity=0.1
+			] {-1+10*exp(x-5)/(1+exp(x-5)))}; % Gaussian function with mean 5 and stddev 1
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (0,5) (5.45,5)
-        };
+			\addplot [
+				thick,
+				color=blue,
+				fill=blue,
+				fill opacity=0.1
+			]
+			fill between[
+					of=top and bottom
+				];
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (5.45,5) (5.45,-2)
-        };
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(0,5) (5.45,5)
+				};
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (4.5,5) (4.5,-2)
-        };
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(5.45,5) (5.45,-2)
+				};
 
-        \draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}] 
-            (axis cs:4.5, -2) -- (axis cs:5.45,-2)
-            node[midway, below=15pt] {\footnotesize $\Delta s$};
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(4.5,5) (4.5,-2)
+				};
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (0,8.5) (8,8.5)
-        };
+			\draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}]
+			(axis cs:4.5, -2) -- (axis cs:5.45,-2)
+			node[midway, below=15pt] {\footnotesize $\Delta s$};
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (6,8.5) (6,-2)
-        };
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(0,8.5) (8,8.5)
+				};
 
-        \addplot[
-            color=black,
-            dashed,
-            thick
-        ]
-        coordinates {
-            (8,8.5) (8,-2)
-        };
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(6,8.5) (6,-2)
+				};
 
-        \draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}] 
-            (axis cs:6, -2) -- (axis cs:8,-2)
-            node[midway, below=15pt] {\footnotesize $\Delta s$};
+			\addplot[
+				color=black,
+				dashed,
+				thick
+			]
+			coordinates {
+					(8,8.5) (8,-2)
+				};
 
-        \end{axis}
-    
-    \end{tikzpicture}
+			\draw[decorate,decoration={brace,mirror,amplitude=10pt,raise=2pt}]
+			(axis cs:6, -2) -- (axis cs:8,-2)
+			node[midway, below=15pt] {\footnotesize $\Delta s$};
+
+		\end{axis}
+
+	\end{tikzpicture}
 
 \end{figure}
 
 The Fisher information captures this through the term $\left ( \frac{\partial\ln p(\bm{r}|s)}{\partial s} \right)^2$, where the square ensures that it doesn't matter if the slope is pointing up or down, and the logarithm is used for its nice algebraic properties. This is not defined for the mean of the tuning curve as shown in the diagram but for the entire conditional probability distribution, so we then just take the mean of this term over the entire set of possible responses:
 
 \begin{equation*}
-    I_F(s) = \int d\bm{r} p(\bm{r}|s)\left ( \frac{\partial\ln p(\bm{r}|s)}{\partial s} \right)^2
+	I_F(s) = \int d\bm{r} p(\bm{r}|s)\left ( \frac{\partial\ln p(\bm{r}|s)}{\partial s} \right)^2
 \end{equation*}
 
 Plugging in a value of $s$ into the Fisher information gives us a measure of how much information the neural response can have about the stimulus at that point.
@@ -1049,73 +1049,73 @@ Plugging in a value of $s$ into the Fisher information gives us a measure of how
 So far, we have only considered rate-based decoding methods. If we want to decode a time-varying stimulus, then we need to use spike-trains. A basic statement of this problem is that we are given as input a series of spike-times $(t_1,...,t_n)$ up to a time $t$, and we want to predict the stimulus value at this time, $s(t)$. Recall that we often describe a spike-train using a sum of dirac-delta functions to give a continuous function $\rho (\tau)$. In the diagram below, note that $\tau$ is the time parameter we use to describe the history of the trial so far, which we can use to predict the stimulus at the current time point $t$.\\
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={Time (s)},
-            xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
-            axis y line=none,
-            axis x line=bottom,
-            xmin=0, xmax=10,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:10
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        % Spike train for a single neuron (small vertical lines)
-        \addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue] 
-            coordinates {
-                (1, 1.5)
-                (1.5, 1.5)
-                (4, 1.5)
-                (5, 1.5)
-                (5.5, 1.5)
-                (7, 1.5)
-                (8.5, 1.5)
-                (9, 1.5)
-                (9.5, 1.5)
-            };
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={Time (s)},
+				xlabel style={at={(axis description cs:0.5,-0.2)}, anchor=north},
+				axis y line=none,
+				axis x line=bottom,
+				xmin=0, xmax=10,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:10
+			]
 
-        \addplot[
-            domain=0:10,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
+			% Spike train for a single neuron (small vertical lines)
+			\addplot+[ycomb, thick, mark=|, mark size=2pt, color=blue]
+			coordinates {
+					(1, 1.5)
+					(1.5, 1.5)
+					(4, 1.5)
+					(5, 1.5)
+					(5.5, 1.5)
+					(7, 1.5)
+					(8.5, 1.5)
+					(9, 1.5)
+					(9.5, 1.5)
+				};
 
-        \node[anchor=west] at (axis cs:10, 1.1) {predict stimulus $s(t)$};
-        \node[anchor=north] at (axis cs:5, 2.3) {spike-train $\rho (t-\tau)$};
+			\addplot[
+				domain=0:10,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {0.5 + 0.3 * sin(2*pi*10*x) + 0.2 * rand};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=west] at (axis cs:10, 1.1) {predict stimulus $s(t)$};
+			\node[anchor=north] at (axis cs:5, 2.3) {spike-train $\rho (t-\tau)$};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
 This problem is in fact almost exactly the reverse of the time-varying neural encoding problem we met in chapter 2. However, there are a couple of crucial differences that warrant discussion. As we've already discussed, in a laboratory setting, we can treat the stimulus as an independent variable, which causes the dependent variable that is the neural response. This means we can give the stimulus any structure we want, such as making it a white noise stimulus, which is how we solved the encoding problem. When decoding, however, we can't directly control the neural response, so we have to work with whatever response we are given. Furthermore, in the time-varying case, the direction of causation makes our problem statement quite unusual: the stimulus causes future values of the response, yet we are trying to predict the stimulus from the response's history. This is, of course, only possible if the history of the \textit{stimulus} provides information about the future stimulus, as the neural response can in reality only tell us about the stimulus that caused it, not the future stimulus.\\
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}
-    % Define a style for all nodes
-    \tikzstyle{node} = [draw, circle, minimum size=50pt, inner sep=0pt]
+	\centering
+	\begin{tikzpicture}
+		% Define a style for all nodes
+		\tikzstyle{node} = [draw, circle, minimum size=50pt, inner sep=0pt]
 
-    % Nodes
-    \node[node] (s) at (0, 4) {$s(t)$};
-    \node[node] (s') at (4, 4) {$s(t+\Delta t)$};
-    \node[node, fill=red!30] (r) at (2, 0) {$r(t)$}; % Different color for r
+		% Nodes
+		\node[node] (s) at (0, 4) {$s(t)$};
+		\node[node] (s') at (4, 4) {$s(t+\Delta t)$};
+		\node[node, fill=red!30] (r) at (2, 0) {$r(t)$}; % Different color for r
 
-    % Edges with arrows
-    \draw[->, line width=1.5pt] (s) -- node [midway, left] {Causes} (r);
-    \draw[->, line width=1.5pt] (r) -- node [midway, right] {Predict} (s');
-    \draw[->, line width=1.5pt] (s) -- node [midway, above] {Causes} (s');
-\end{tikzpicture}
+		% Edges with arrows
+		\draw[->, line width=1.5pt] (s) -- node [midway, left] {Causes} (r);
+		\draw[->, line width=1.5pt] (r) -- node [midway, right] {Predict} (s');
+		\draw[->, line width=1.5pt] (s) -- node [midway, above] {Causes} (s');
+	\end{tikzpicture}
 \end{figure}
 
 In the diagram above, we can only observe the response, but can use this to predict the stimulus at a later time, as they are still correlated via the stimulus history. This does mean, however, that spike-train decoding is impossible if the stimulus is white-noise: we require internal structure within the stimulus.\\
@@ -1125,13 +1125,13 @@ A classic application of spike-train decoding methods would be a brain-computer 
 Proceeding exactly like the encoding case, we want to form a linear estimate of the stimulus at time $t-\tau_0$, given the entire spike-train up to the time $t$. This is done by integrating over the whole trial with a kernel $K(\tau)$. Note in the equation shown, the integral is over all time, not from time 0 to infinity as you might expect. This means technically we are considering spikes after the time $t$ (recall $\tau$ runs backwards from time $t$). This can be avoided by making the kernel acausal, which means we clamp its value to 0 for negative values of $\tau$.
 
 \begin{equation*}
-    s_{est}(t-\tau_0) = \int_{-\infty}^\infty d\tau (\rho(t-\tau)-\langle r \rangle)K(\tau)
+	s_{est}(t-\tau_0) = \int_{-\infty}^\infty d\tau (\rho(t-\tau)-\langle r \rangle)K(\tau)
 \end{equation*}
 
 Our job is to figure out the kernel that gives the \textit{best} estimate of the stimulus given the spike-train. Just like with neural encoding, we consider a training set of trials where we measure both the spike-trains and the stimulus, and minimise the following mean squared error over all these trials:
 
 \begin{equation*}
-    \text{MSE} = \frac{1}{T}\int_0^T dt \left\langle \left ( s(t-\tau_0) - s_{est}(t-\tau_0) \right)^2\right\rangle
+	\text{MSE} = \frac{1}{T}\int_0^T dt \left\langle \left ( s(t-\tau_0) - s_{est}(t-\tau_0) \right)^2\right\rangle
 \end{equation*}
 
 We can't minimise this like before, because the neural response is not white noise (it has a non-delta autocorrelation), so the full solution requires a Fourier decomposition which is beyond the scope of these notes. However, in the case of a low firing rate, where effects such as the refractory period don't matter much, our spike-trains effectively have zero auto-correlation and the solution is very interpretable, so we briefly mention what the solution amounts to.\\
@@ -1139,9 +1139,9 @@ We can't minimise this like before, because the neural response is not white noi
 Recall the spike-triggered average $C(\tau)$ discussed in chapter 1. Our optimal kernel amounts to the spike-triggered average, defined so that we consider stimuli after spikes rather than before, and shifted an amount $\tau_0$ to the left, to account for the time lag. Our decoding procedure then just sums up the spike-triggered average over all spikes, as shown in the figure below.\\
 
 \begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{decoding.png} % Adjust the width as needed
-    \label{fig:example_png}
+	\centering
+	\includegraphics[width=0.5\textwidth]{decoding.png} % Adjust the width as needed
+	\label{fig:example_png}
 \end{figure}
 
 This is in fact an extremely intuitive result. If we only measured one spike, our best possible guess for the stimulus' future values would be the spike-triggered average following this spike. In the presence of many spikes, we do the same thing, summing over the best possible guess provided by each spike individually.
@@ -1157,49 +1157,49 @@ A brief overview of probability distributions, information, and entropy by thems
 The first concept we will discuss is surprise. Imagine you toss a single unbiased coin, and the result comes up heads. We can characterise the amount of information this result gives you using a quantity called surprise. This is measured in bits - and the information gain from observing heads for a coin toss is 1 bit. So a bit is by definition how much uncertainty is resolved by knowing the outcome of an equal probability binary variable. (It's worth noting, however, that this term is slightly contentious - we often use 'bit' to refer to a binary variable irrespective of whether its probability is 50/50, such as a bit in your computer). We can extend this idea to arbitrary probabilities as follows. Imagine that you have repeated fair coin tosses: the information gained from each coin toss is additive. The diagram below illustrates this for 3 repeated coin tosses: the total information gain is 3 bits, while the probability of each final outcome is $\frac{1}{8}$.
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-  level distance=2cm,
-  level 1/.style={sibling distance=4cm},
-  level 2/.style={sibling distance=2cm},
-    level 3/.style={sibling distance=1cm},
-  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
-]
-\node {} % Root
-  child {node {} % Left Child
-    child {node {} % Left-Left
-      child {node {}}
-      child {node {}}
-    }
-    child {node {} % Left-Right
-      child {node {}}
-      child {node {}}
-    }
-  }
-  child {node {} % Right Child
-    child {node {} % Right-Left
-      child {node {}}
-      child {node {}}
-    }
-    child {node {} % Right-Right
-      child {node {}}
-      child {node {}}
-    }
-  };
+	\centering
+	\begin{tikzpicture}[
+			level distance=2cm,
+			level 1/.style={sibling distance=4cm},
+			level 2/.style={sibling distance=2cm},
+			level 3/.style={sibling distance=1cm},
+			every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+		]
+		\node {} % Root
+		child {node {} % Left Child
+				child {node {} % Left-Left
+						child {node {}}
+						child {node {}}
+					}
+				child {node {} % Left-Right
+						child {node {}}
+						child {node {}}
+					}
+			}
+		child {node {} % Right Child
+				child {node {} % Right-Left
+						child {node {}}
+						child {node {}}
+					}
+				child {node {} % Right-Right
+						child {node {}}
+						child {node {}}
+					}
+			};
 
-\draw[->, thick] (4.5, 0) -- (4.5, -6); % Draws an arrow from (4,0) to (6,2)
-    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-\node[draw=none, fill=none] at (6.5, -3) {Increasing surprise}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -7) {$p=\frac{1}{8}$ or surprise $=3$ bits}; % Places text at (6,2.5)
+		\draw[->, thick] (4.5, 0) -- (4.5, -6); % Draws an arrow from (4,0) to (6,2)
+		\node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+		\node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+		\node[draw=none, fill=none] at (6.5, -3) {Increasing surprise}; % Places text at (6,2.5)
+		\node[draw=none, fill=none] at (0, -7) {$p=\frac{1}{8}$ or surprise $=3$ bits}; % Places text at (6,2.5)
 
-\end{tikzpicture}
+	\end{tikzpicture}
 \end{figure}
 
 A moments thought tells you that the surprise is related to the probability of an outcome via the following formula:
 
 \begin{equation*}
-    \text{surprise} = -\log_2(p)
+	\text{surprise} = -\log_2(p)
 \end{equation*}
 
 We extend this naturally to probabilities that are not powers of 2, which will lead to non-integer values for the surprise. The surprise of an unlikely event is high, while the surprise of an unlikely event is low. This makes sense - if you observe an event that was certain, ie, has probability one, you have gained zero information, and the surprise is zero, while for very unlikely events, the surprise can grow incredibly high. Surprise as a quantity has the important property that it is additive over non-independent events. This means the information gain from independent coin tosses add up. This can be shown easily, as independent probabilities multiply, and the logarithm of a product is the sum of the logarithms.\\
@@ -1207,102 +1207,102 @@ We extend this naturally to probabilities that are not powers of 2, which will l
 While surprise is a defined for a the measurement of a single outcome, entropy is defined across an entire probability distribution. Entropy simply tells you, on average, how surprising is a measurement drawn from that probability distribution. We usually think of high entropy distributions as being \textit{disordered}, while low entropy distributions are \textit{ordered}. This aligns with our more formal definition: for a very ordered distribution, the outcomes of draws are typically not very surprising, while disordered distributions have more surprising draws on average. Entropy is also measured in bits. Formally, the entropy of a probability distribution is given by:
 
 \begin{equation*}
-    H = -\sum_i p_i \log_2(p_i)
+	H = -\sum_i p_i \log_2(p_i)
 \end{equation*}
 
 If we go back to our binary tree example, we can graphically represent some different probability distributions with different entropies. We see that the entropy means, on average, how far down the tree do you traverse. For general probability distributions this idea is extended, using the same formula, and really has the same meaning but lacks the graphical interpretability of a binary tree.
 
 \begin{figure}[H]
-\centering
-    \begin{subfigure}[t][][bs]{0.45\textwidth}
-\begin{tikzpicture}[
-  level distance=2cm,
-  level 1/.style={sibling distance=4cm},
-  level 2/.style={sibling distance=2cm},
-    level 3/.style={sibling distance=1cm},
-  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
-]
-\node {} % Root
-  child {node {} % Left Child
-    child {node {} % Left-Left
-      child {node {}}
-      child {node {}}
-    }
-    child {node {} % Left-Right
-      child {node {}}
-      child {node {}}
-    }
-  }
-  child {node {} % Right Child
-    child {node {} % Right-Left
-      child {node {}}
-      child {node {}}
-    }
-    child {node {} % Right-Right
-      child {node {}}
-      child {node {}}
-    }
-  };
-    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -6.8) {$H=8*\frac{1}{8}*3=3\text{ bits}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -7.3) {High entropy}; % Places text at (6,2.5)
-\end{tikzpicture}
-\end{subfigure}
-\hfill
-\hspace{0.5cm}
-    \begin{subfigure}[t][][bs]{0.45\textwidth}
-\begin{tikzpicture}[
-  level distance=2cm,
-  level 1/.style={sibling distance=4cm},
-  level 2/.style={sibling distance=2cm},
-    level 3/.style={sibling distance=1cm},
-  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
-]
-\node {} % Root
-  child {node {} % Left Child
-    child {node {} % Left-Left
-      child {node {}}
-      child {node {}}
-    }
-    child {node {} % Left-Right
-    }
-  }
-  child {node {} % Right Child
-  };
-    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -6.8) {$H=0.5*1+0.25*2+2*0.125*3=1.75\text{ bits}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -7.3) {Medium entropy}; % Places text at (6,2.5)
-\end{tikzpicture}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t][][t]{0.45\textwidth}
-\centering
-\begin{tikzpicture}[
-  level distance=2cm,
-  level 1/.style={sibling distance=4cm},
-  level 2/.style={sibling distance=2cm},
-    level 3/.style={sibling distance=1cm},
-  every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
-]
-\node {} % Root
-  child {node {} % Left Child
-  }
-  child {node {} % Right Child
-  };
-    \node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -2.8) {$H=2*0.5*1=1\text{ bits}$}; % Places text at (6,2.5)
-    \node[draw=none, fill=none] at (0, -3.3) {Low entropy}; % Places text at (6,2.5)
-\end{tikzpicture}
-\end{subfigure}
+	\centering
+	\begin{subfigure}[t][][bs]{0.45\textwidth}
+		\begin{tikzpicture}[
+				level distance=2cm,
+				level 1/.style={sibling distance=4cm},
+				level 2/.style={sibling distance=2cm},
+				level 3/.style={sibling distance=1cm},
+				every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+			]
+			\node {} % Root
+			child {node {} % Left Child
+					child {node {} % Left-Left
+							child {node {}}
+							child {node {}}
+						}
+					child {node {} % Left-Right
+							child {node {}}
+							child {node {}}
+						}
+				}
+			child {node {} % Right Child
+					child {node {} % Right-Left
+							child {node {}}
+							child {node {}}
+						}
+					child {node {} % Right-Right
+							child {node {}}
+							child {node {}}
+						}
+				};
+			\node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -6.8) {$H=8*\frac{1}{8}*3=3\text{ bits}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -7.3) {High entropy}; % Places text at (6,2.5)
+		\end{tikzpicture}
+	\end{subfigure}
+	\hfill
+	\hspace{0.5cm}
+	\begin{subfigure}[t][][bs]{0.45\textwidth}
+		\begin{tikzpicture}[
+				level distance=2cm,
+				level 1/.style={sibling distance=4cm},
+				level 2/.style={sibling distance=2cm},
+				level 3/.style={sibling distance=1cm},
+				every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+			]
+			\node {} % Root
+			child {node {} % Left Child
+					child {node {} % Left-Left
+							child {node {}}
+							child {node {}}
+						}
+					child {node {} % Left-Right
+						}
+				}
+			child {node {} % Right Child
+				};
+			\node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -6.8) {$H=0.5*1+0.25*2+2*0.125*3=1.75\text{ bits}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -7.3) {Medium entropy}; % Places text at (6,2.5)
+		\end{tikzpicture}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t][][t]{0.45\textwidth}
+		\centering
+		\begin{tikzpicture}[
+				level distance=2cm,
+				level 1/.style={sibling distance=4cm},
+				level 2/.style={sibling distance=2cm},
+				level 3/.style={sibling distance=1cm},
+				every node/.style={circle, draw, minimum size=0.5cm} % Nodes are empty circles
+			]
+			\node {} % Root
+			child {node {} % Left Child
+				}
+			child {node {} % Right Child
+				};
+			\node[draw=none, fill=none] at (2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (-2, -0.8) {$p=\frac{1}{2}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -2.8) {$H=2*0.5*1=1\text{ bits}$}; % Places text at (6,2.5)
+			\node[draw=none, fill=none] at (0, -3.3) {Low entropy}; % Places text at (6,2.5)
+		\end{tikzpicture}
+	\end{subfigure}
 \end{figure}
 
 For continuous probability distributions, we can also define the differential entropy, as:
 
 \begin{equation*}
-    H = -\int dx p(x) \log_2(p(x))
+	H = -\int dx p(x) \log_2(p(x))
 \end{equation*}
 
 There are complications with continuous distributions discussed in the book in terms of having to define a measurement accuracy. In fact, the above definition doesn't really make sense (look at the units - $p(x)$ has units $[x]^{-1}$, and so we're taking a logarithm of a quantity with units, which doesn't make sense, and also it means a this quantity is not invariant under transformations of $x$). We won't really worry about the details of this, but it's worth being aware of.\\
@@ -1310,19 +1310,19 @@ There are complications with continuous distributions discussed in the book in t
 Before discussing further topics within information theory such as mutual information, we will quickly review multivariate probability distributions. A probability distribution can be defined over more than one variable. $P(x,y)$ is the joint probability that the first variable takes value $x$, and the second variable takes value $y$. Such probability distributions are normalised, such that:
 
 \begin{equation*}
-    \sum_{x,y} P(x,y) = 1
+	\sum_{x,y} P(x,y) = 1
 \end{equation*}
 
 We define the marginal probability distribution over $x$ as the distribution that we get if we don't care about measuring the $y$ values - so we sum over all possible $y$ values we could measure:
 
 \begin{equation*}
-    P(x) = \sum_y P(x,y)
+	P(x) = \sum_y P(x,y)
 \end{equation*}
 
 Additionally, we define the conditional probability distribution as the distribution over $x$, \textit{given} that we know the value of $y$:
 
 \begin{equation*}
-    P(x|y) = \frac{P(x,y)}{P(y)}
+	P(x|y) = \frac{P(x,y)}{P(y)}
 \end{equation*}
 
 The denominator ensures that this is a correctly normalised probability distribution in the variable $x$, so that $\sum_x P(x|y) = 1$.\\
@@ -1330,13 +1330,13 @@ The denominator ensures that this is a correctly normalised probability distribu
 In general, $x$ and $y$ are dependent. This means knowing the value of one of them tells us something about the other. Independence is when they tell us nothing about the other, and so:
 
 \begin{equation*}
-    P(x,y) = P(x)P(y)
+	P(x,y) = P(x)P(y)
 \end{equation*}
 
 Or equivalently:
 
 \begin{equation*}
-    P(x|y) = P(x)
+	P(x|y) = P(x)
 \end{equation*}
 
 We can now develop our notion of entropy further for multivariate distributions. In general, we want to quantify how much does knowing variable $y$ tell us about variable $x$. Entropy comes in handy here. It could be that, without knowing $y$, the distribution over $x$ is very disordered; it has high average surprise. However, knowing $y$ could make the distribution over $x$ very ordered. This would mean that $y$ is very informative about $x$, and that these two variables have high mutual information. We will formally define these notions now.\\
@@ -1344,32 +1344,32 @@ We can now develop our notion of entropy further for multivariate distributions.
 First of all, we define the full entropy for the joint distribution, which tells us the average information we gain by measuring both variables together:
 
 \begin{equation*}
-    H(X,Y) = -\sum_{x,y} P(x,y) \log_2P(x,y)
+	H(X,Y) = -\sum_{x,y} P(x,y) \log_2P(x,y)
 \end{equation*}
 
 We can also define the entropy of a single variable, ignoring the value of the other variable, via its marginal distribution, which tells us the information we gain if we measure this variable, ignoring the other variable:
 
 \begin{equation*}
-    H(X) = -\sum_x P(x) \log_2P(x)
+	H(X) = -\sum_x P(x) \log_2P(x)
 \end{equation*}
 
 We can also consider the the entropy of the conditional distribution. This tells us the average information we gain by measuring the variable $x$, given that we know the value of $y$. Note this would in general be a function of the value of $y$ we measure. We therefore take the expectation over $y$, which gives what is known as the conditional entropy:
 
 \begin{align*}
-    H(X|Y) &= -\sum_{y} P(y) \sum_x P(x|y) \log_2P(x|y)\\
-    &= -\sum_{x,y} P(x,y) \log_2P(x|y)
+	H(X|Y) & = -\sum_{y} P(y) \sum_x P(x|y) \log_2P(x|y) \\
+	       & = -\sum_{x,y} P(x,y) \log_2P(x|y)
 \end{align*}
 
 Note that all the various ways of relating full, conditional, and marginal probabilities also apply to these entropies, however, the logarithm turns multiplication/division into addition/subtraction. For example:
 
 \begin{equation*}
-    H(X,Y) = H(Y) + H(X|Y)
+	H(X,Y) = H(Y) + H(X|Y)
 \end{equation*}
 
 A particularly important quantity is the mutual information between two variables. This is defined as the reduction in uncertainty about one variable that is obtained by knowing the value of the other. Our initial uncertainty in $x$, without knowing $y$, is just given by the unconditional entropy on $x$ $H(X)$, while the uncertainty if we do know $y$ is given by $H(X|Y)$. The conditional entropy $H(X|Y)$ essentially defines a limit on how much certainty we can have about $X$ by knowing $Y$ - even in the presence of complete knowledge of $y$ there is still inherent noise in the variations of $x$. It is therefore sometimes defined as the noise entropy. The mutual information is therefore:
 
 \begin{equation*}
-    I(X;Y) = H(X) - H(X|Y)
+	I(X;Y) = H(X) - H(X|Y)
 \end{equation*}
 
 Note this is symmetric in $X$ and $Y$ (try to prove this!). It is also non-negative, as the conditional entropy is always less than the full entropy, and equals zero only when $x$ and $y$ are independent. You can interpret the mutual information as a measure of the mutual dependence between the two variables, or how much knowing one tells us about the other.\\
@@ -1377,8 +1377,8 @@ Note this is symmetric in $X$ and $Y$ (try to prove this!). It is also non-negat
 The following diagram captures all the useful relationships (areas add or subtract):
 
 \begin{figure}[h] % Use figure environment for floating objects
-    \centering % Center the image
-    \includegraphics[width=0.5\textwidth]{entropy.png} % Adjust width as needed
+	\centering % Center the image
+	\includegraphics[width=0.5\textwidth]{entropy.png} % Adjust width as needed
 \end{figure}
 
 \subsection{Neural information}
@@ -1390,66 +1390,66 @@ We will consider neurons that use a rate-based encoding to describe their stimul
 We therefore seek an encoding that maximises the mutual information between the response and the stimulus. First of all we will consider the marginal distribution over the response, $p(r)$. Regardless of the stimulus, we can already describe what this should look like. We want this distribution to be as disordered as possible - if every measurement from it is as surprising as possible, then the information we gain from each measurement is as high as possible. This means it should be an \texit{entropy maximising} distribution. Compare this with the opposite extreme: if our distribution always gives us the same response $r$, so it has zero entropy, then we gain no inofrmation at all by measuring $r$! So we must maximise the entropy of $p(r)$ subject to some constraints (without constraints we would try to use all real numbers up to infinity to maximise the entropy). Below we list some common constraints and their corresponding entropy maximising distributions.
 
 \begin{itemize}
-    \item Maximum firing rate $r_{max}$: The distribution is a uniform distribution between 0 and $r_{max}$.
-    \item Fixed mean firing rate $\langle r \rangle$: The distribution is the exponential distribution $p(r) = \frac{1}{\langle r \rangle}e^{-r/\langle r \rangle}$.
-    \item Fixed mean and variance: The distribution is the Gaussian distribution $p(r) = \frac{1}{\sqrt{2\pi\sigma^2}}e^{-(r-\mu)^2/2\sigma^2}$.
+	\item Maximum firing rate $r_{max}$: The distribution is a uniform distribution between 0 and $r_{max}$.
+	\item Fixed mean firing rate $\langle r \rangle$: The distribution is the exponential distribution $p(r) = \frac{1}{\langle r \rangle}e^{-r/\langle r \rangle}$.
+	\item Fixed mean and variance: The distribution is the Gaussian distribution $p(r) = \frac{1}{\sqrt{2\pi\sigma^2}}e^{-(r-\mu)^2/2\sigma^2}$.
 \end{itemize}
 
 The marginal distribution over stimuli is given to us by nature: we have no control over it. The idea of an information maximising encoding is to find an appropriate conditional distribution $p(r|s)$ which maps this given stimulus distribution to the entropy maximising distribution (recall $p(r|s)$ is essentially the tuning curve plus noise). The mapping that acheives this has an interesting property: it is area preserving. This means that we encode stimuli with a precision proportional to their likely occurrence: very likely stimuli are encoded with high precision, while unlikely stimuli are encoded with low precision. This is a very intuitive result, and can be seen in the diagram below (for the maximum firing rate constraint).
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}
-    % Top axis: Gaussian distribution
-    \begin{axis}[
-        width=\textwidth,
-        height=6cm,
-        axis x line=bottom,
-        axis y line=left,
-        xlabel={$s$},
-        x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
-        ylabel={$p(s)$},
-        xmin=-3, xmax=3,
-        ymin=0, ymax=0.5,
-        xtick=\empty, % No x-axis ticks
-        ytick=\empty  % No y-axis ticks
-    ]
-    \addplot[domain=-3:3, samples=100, thick, black] {exp(-x^2/2)/sqrt(2*pi)};
-    \addplot[domain=-0.1:0.1, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
-    \addplot[domain=1:1.2, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
-    \end{axis}
+	\centering
+	\begin{tikzpicture}
+		% Top axis: Gaussian distribution
+		\begin{axis}[
+				width=\textwidth,
+				height=6cm,
+				axis x line=bottom,
+				axis y line=left,
+				xlabel={$s$},
+				x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
+				ylabel={$p(s)$},
+				xmin=-3, xmax=3,
+				ymin=0, ymax=0.5,
+				xtick=\empty, % No x-axis ticks
+				ytick=\empty  % No y-axis ticks
+			]
+			\addplot[domain=-3:3, samples=100, thick, black] {exp(-x^2/2)/sqrt(2*pi)};
+			\addplot[domain=-0.1:0.1, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+			\addplot[domain=1:1.2, samples=50, blue, fill=blue, fill opacity=0.2] {exp(-x^2/2)/sqrt(2*pi)} \closedcycle;
+		\end{axis}
 
-    % Bottom axis: Uniform distribution
-    \begin{axis}[
-        width=\textwidth,
-        height=5cm,
-        at={(0,-5cm)}, % Position it below the first plot
-        axis x line=bottom,
-        axis y line=left,
-        xlabel={$r$},
-        x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
-        ylabel={$p(r)$},
-        xmin=-3, xmax=3,
-        ymin=0, ymax=0.3,
-        xtick=\empty, % No x-axis ticks
-        ytick=\empty  % No y-axis ticks
-    ]
-    \addplot[domain=-3:3, samples=2, thick, black] {0.2};
-    \addplot[domain=-0.25:0.25, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
-    \addplot[domain=1.6:1.8, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
-    \end{axis}
-\end{tikzpicture}
-\begin{tikzpicture}[overlay, remember picture]
-    % Example arrow pointing to a specific location
-    \draw[->, thick, black] 
-        (-6.95,6) -- (-6.95,2) 
-        node[midway, above] {};
-    
-    % Another example arrow
-    \draw[->, thick, black] 
-        (-4.5,6) -- (-3.1,2) 
-        node[midway, below] {};
-\end{tikzpicture}
+		% Bottom axis: Uniform distribution
+		\begin{axis}[
+				width=\textwidth,
+				height=5cm,
+				at={(0,-5cm)}, % Position it below the first plot
+				axis x line=bottom,
+				axis y line=left,
+				xlabel={$r$},
+				x label style={at={(axis description cs:0.97,-0.05)},anchor=north},
+				ylabel={$p(r)$},
+				xmin=-3, xmax=3,
+				ymin=0, ymax=0.3,
+				xtick=\empty, % No x-axis ticks
+				ytick=\empty  % No y-axis ticks
+			]
+			\addplot[domain=-3:3, samples=2, thick, black] {0.2};
+			\addplot[domain=-0.25:0.25, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
+			\addplot[domain=1.6:1.8, samples=50, blue, fill=blue, fill opacity=0.2] {0.2} \closedcycle;
+		\end{axis}
+	\end{tikzpicture}
+	\begin{tikzpicture}[overlay, remember picture]
+		% Example arrow pointing to a specific location
+		\draw[->, thick, black]
+		(-6.95,6) -- (-6.95,2)
+		node[midway, above] {};
+
+		% Another example arrow
+		\draw[->, thick, black]
+		(-4.5,6) -- (-3.1,2)
+		node[midway, below] {};
+	\end{tikzpicture}
 \end{figure}
 
 So our distribution satisfies the relationship $p(r)\Delta r = p(s) \Delta s$, or equivalently, the tuning curve satisfies the relationship $\frac{df}{ds}=\frac{p(f(s))}{p(s)}$. The main takeaway to remember here is we want an encoding that makes our stimulus into essentially a white noise response.\\
@@ -1459,7 +1459,7 @@ For populations of neurons, it's fairly obvious that different neurons must enco
 So far we have only considered the spike-count rate of neurons and populations of neurons, however, our discussion applies as well to firing rate based encodings. For the early visual system, we know that retinal and LGN cells are spatially distributed (and follow a retinotopic map) and can thus be described by their locations. We can use the linear filters from chapter 2 to predict their responses over both time and space to arbitrary stimuli:
 
 \begin{equation*}
-    L(\bm{a},t) = \int_0^{\infty} d\tau \int d\bm{x} D(\bm{x}-\bm{a},\tau) s(\bm{x},t-\tau)
+	L(\bm{a},t) = \int_0^{\infty} d\tau \int d\bm{x} D(\bm{x}-\bm{a},\tau) s(\bm{x},t-\tau)
 \end{equation*}
 
 Here, $\bm{a}$ represents the position of, say, the retinal ganglion cell we are considering, so we have an array of cells that respond differently based on their location to a stimulus that also varies over space and time. Now, just like before, this code will maximise its information about the stimulus if different neural responses are completely uncorrelated and the distributions over their individual responses are entropy maximising. A type of response that approximates these criteria is white noise (this satisifies the first but not necessarily the second criterion). So our approach is to design a filter such that the cells are responding like white noise. Much like TV static, knowing the response of one cell at one time should tell you nothing about the responses of any other cells at any other times. The book describes how this is done in stages in the visual system: retinal ganglion cells are well described as a white-noise response spatially, but are correlated with themselves in time, and then cells in the LGN further whiten the response in the temporal domain.\\
@@ -1469,87 +1469,282 @@ We've seen how white noise has a dirac delta autocorrelation function. We haven'
 We will also use the convolution theorem to reinterpret what the linear filter above actually does. The neural response is defined as the convolution of the stimulus with a filter, which means we can interpret the function of this filter very straightforwardly by thinking in frequency space. The signal is composed of some distribution over all frequencies, and the filter simply weights these frequencies to produce the response, as shown in the diagram below.
 
 \begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-        % Define some colors for the stimulus and STA window
-        \definecolor{stimuluscolor}{RGB}{150, 150, 255}
-        \definecolor{stawindowcolor}{RGB}{255, 200, 200}
-        
-        \begin{axis}[
-            width=12cm,
-            height=4cm,
-            xlabel={$\omega$ (s^{-1})},
-            xticks=none,
-            xmajorticks=false,
-            xlabel style={},
-            axis y line=none,
-            axis x line=bottom,
-            axis line style={-},
-            xmin=0, xmax=5,
-            ymin=0, ymax=2,
-            clip=false,
-            domain=0:5,
-            x dir=reverse,
-        ]
+	\centering
+	\begin{tikzpicture}
+		% Define some colors for the stimulus and STA window
+		\definecolor{stimuluscolor}{RGB}{150, 150, 255}
+		\definecolor{stawindowcolor}{RGB}{255, 200, 200}
 
-        \pgfmathsetseed{1235}
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {1 + 2*exp(-((x-5)^2)/8)*(0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4))};
+		\begin{axis}[
+				width=12cm,
+				height=4cm,
+				xlabel={$\omega$ (s^{-1})},
+				xticks=none,
+				xmajorticks=false,
+				xlabel style={},
+				axis y line=none,
+				axis x line=bottom,
+				axis line style={-},
+				xmin=0, xmax=5,
+				ymin=0, ymax=2,
+				clip=false,
+				domain=0:5,
+				x dir=reverse,
+			]
 
-        \node[anchor=west] at (axis cs:0, 1) {Response};
-        \node[anchor=west] at (axis cs:5.8, 1) {$\tilde{L}(\bm{k},\omega)$};
+			\pgfmathsetseed{1235}
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {1 + 2*exp(-((x-5)^2)/8)*(0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4))};
 
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {4 + 2*exp(-((x-5)^2)/8)};
+			\node[anchor=west] at (axis cs:0, 1) {Response};
+			\node[anchor=west] at (axis cs:5.8, 1) {$\tilde{L}(\bm{k},\omega)$};
 
-        \node[anchor=west] at (axis cs:0, 4) {Filter};
-        \node[anchor=west] at (axis cs:5.8, 4) {$\tilde{D}(\bm{k},\omega)$};
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {4 + 2*exp(-((x-5)^2)/8)};
 
-        \pgfmathsetseed{1235}
-        \addplot[
-            domain=0:5,
-            samples=100,
-            thick,
-            black,
-            smooth
-        ] {7 + 0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4)};
+			\node[anchor=west] at (axis cs:0, 4) {Filter};
+			\node[anchor=west] at (axis cs:5.8, 4) {$\tilde{D}(\bm{k},\omega)$};
 
-        \node[anchor=west] at (axis cs:0, 7) {Signal};
-        \node[anchor=west] at (axis cs:5.8, 7) {$\tilde{s}(\bm{k},\omega)$};
+			\pgfmathsetseed{1235}
+			\addplot[
+				domain=0:5,
+				samples=100,
+				thick,
+				black,
+				smooth
+			] {7 + 0.4 * cos(2*pi*20*x-1) + 0.2 * rand + 1.7 * exp(-(x-4)^2/0.4)};
 
-        \node[anchor=west] at (axis cs:2.5, 6) {$\times$};
-        \node[anchor=west] at (axis cs:2.5, 3) {$=$};
+			\node[anchor=west] at (axis cs:0, 7) {Signal};
+			\node[anchor=west] at (axis cs:5.8, 7) {$\tilde{s}(\bm{k},\omega)$};
 
-        \end{axis}
-    \end{tikzpicture}
+			\node[anchor=west] at (axis cs:2.5, 6) {$\times$};
+			\node[anchor=west] at (axis cs:2.5, 3) {$=$};
+
+		\end{axis}
+	\end{tikzpicture}
 
 \end{figure}
 
 We only plot the frequencies in time, but obviously they exist in space as well. Now, we can measure the spatial and temporal power spectrum of naturally occurring visual stimuli $\tilde{s}(\bm{k},\omega)$. In order to maximise the information our responses have about the stimuli, it is obvious that we just need to design our filter to invert the natural power spectrum to give a white noise spectrum! This means:
 
 \begin{equation*}
-    \tilde{D}(\bm{k},\omega)=\frac{\sigma_L}{\tilde{s}(\bm{k},\omega)}
+	\tilde{D}(\bm{k},\omega)=\frac{\sigma_L}{\tilde{s}(\bm{k},\omega)}
 \end{equation*}
 
 Where $\sigma_L$ is the white noise power of the linear response. Note this is slightly different to the solution discussed in the book. First of all, I have neglected discussing phases to simplify things (Fourier transforms give you complex numbers!). Additionally, the book uses the Fourier transform of the stimulus autocorrelation function, not the stimulus itself, hence the square root. These are related by the Wiener-Khinchin theorem, so these results are essentially equivalent. I personally find the Fourier transform of an autocorrelation function trickier to conceptualise. So bear in mind that my discussion is aimed at developing intuition, however, if you want to be more formal you should follow the derivation in the book.\\
 
 This chapter works through these calculations for naturally occurring stimuli, with some interesting discussions of the results. They also use the additional complication of assuming additive white noise on top of the measured stimulus, which modifies the results slightly, but conceptually our discussion still stands. An interesting result is that they use this information-maximisation approach to derive the retinal ganglion cells' spatial receptive fields, finding results that match experiment well.\\
 
-Some of these results are actually very interpretable: for example, in the diagram below, the receptive field with the dashed line represents the retinal ganglion cell's receptive field in the presence of high noise, while the solid line represents its response in the presence of low noise. In the high noise case, acheiving an accurate encoding by averaging out the noise over a larger region of space becomes a priority, while in the low noise case, it's more important to have neighbouring neurons having non-overlapping neurons, hence the centre-surround structure.
+Some of these results are actually very interpretable: for example, in the diagram below, the receptive field with the dashed line represents the retinal ganglion cell's receptive field in the presence of high noise, while the solid line represents its response in the presence of low noise. In the high noise case, acheiving an accurate encoding by averaging out the noise over a larger region of space becomes a priority, while in the low noise case, it's more important that neighbouring neurons having non-overlapping receptive fields, hence the centre-surround structure.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{receptive.png}
+\end{figure}
+
+\section{Chapter 5 - Model Neurons I: Neuroelectronics}
+
+In this chapter and the next, we dive into models of single-neuron electrical  properties, at an increasing level of complexity. Before doing this, it is worth thinking about why we are modelling single neurons, and the level of depth to which we want to model them.\\
+
+I begin by referring to David Marr's three levels of analysis: the computational, algorithmic, and implementation levels. Of course, understanding the implementation level is important in its own right, in the same sense that having some idea of how semiconductors and transistors work is important for understanding how digital computers work. However, in the case of digital computers, we know apriori that the fundamental computational units consists of its logic gates, and so we can abstract away these lower-level details and focus on the algorithmic aspects (unless you're a chip designer). In the case of the brain, it is still highly debated what the fundamental computational units are, or in other words, what details we can abstract away and in what contexts, so studying the implementation level is far more pertinent.\\
+
+That said, it is crucial to understand that lower-level details won't lead to fundamentally new computational capabilities. It can be proved that networks of even the most simple possible single-neuron model, the McCulloch-Pitts neuron, can be both Turing complete and universal function approximators. These are the neurons out of which modern AI systems are constructed. However, caring only that your system is Turing complete and a universal function approximator is a bit like a man with a horse telling Henry Ford he doesn't need to build cars because, in principle, with an infinite amount of time and supplies, they can both travel just as far. In the world of computation, efficiency and speed are key. AI systems leverage the completeness of McCulloch-Pitts neurons with the efficiency of modern chips highly optimised for large linear algebra operations. In the brain, efficiency may well be gained by more complex computations occurring at the single-neuron or sub-neuron levels, and it is our job to figure out what these could be.\\
+
+\subsection{Basic neuron physiology}
+
+We begin with a brief summary of the relevant physiological properties of neurons:\\
+
+\begin{itemize}
+    \item Ion pumps maintain a concentration gradient of different ions across the membrane. The most important ion pump is Na$^+$/K$^+$ ATPase, which pumps 3 Na$^+$ ions out of the cell for every 2 K$^+$ ions it pumps in, hydrolyzing 1 ATP in the process. This pump alone can be responsible for up to 75\% of a neuron's energy expenditure.
+    \item The net effect of all the pumps is such that, at rest, the inside of the neuron has an excess of negative charge, while the outside has an excess of positive charge.
+    \item We measure potential difference from outside to inside, so the resting potential is negative at around -70mV. In total, the potential can vary from around -90mV to +50mV.
+    \item Neuron membranes are made of lipid bilayers, which are impermeable to ions, and therefore act as capacitors.
+    \item The capacitance per unit area is roughly 10nF/mm$^2$, and neuronal surface areas vary from around 0.01 to 0.1mm$^2$.
+    \item Ion channels are embedded in the membrane, and are highly selective to which ions they allow to pass through. These channels act as resistors in parallel with the capacitor. At rest, the net specific membrance resistance is around 1M\Omega/$\text{mm}^2$.
+    \item The most important ions are Na$^+$, K$^+$, Ca$^2+$ and Cl$^-$. These all have different concentrations inside and outside the cell, which means they have thermodynamic diffusive forces acting on them, in addition to electrical forces caused by the potential difference. Typically, the change in concentration gradients is small enough that this diffusive force is roughly constant compared to the electrical force (although there are important exceptions).
+    \item Sodium (Na$^+$) and potassium (K$^+$) are responsible for action potential generation. Na$^+$ is more concentrated outside the cell than inside ($\sim$145mM vs $\sim$12mM). K$^+$ is more concentrated inside the cell than outside ($\sim$155mM vs $\sim$4mM).
+    \item Calcium (Ca$^{2+}$) is important for synaptic transmission/vesicle release, among other things. It is far more concentrated outside the cell than inside ($\sim$1-2mM vs $\sim$0.0001mM).
+    \item Chloride (Cl$^-$) is important for inhibitory synaptic currents and synaptic plasticity, among other things. It is more concentrated outside the cell than inside ($\sim$120mM vs $\sim$4mM).
+    \item We typically model membrane currents as going from inside to outside the cell, so a positive current is a hyperpolarising current, while a negative current is a depolarising current. In contrast, an experimental electrode current is defined as going from outside to inside the cell.
+\end{itemize}
+
+\subsection{Membrane currents and the Nernst equation}
+
+To construct a point neuron model (which just means we don't worry about morphology), we combine the above elements into an equivalent RC circuit, which allows us to use circuit theory to study how the membrance potential and currents change over time.One of the building blocks of such a model represents the current through ion channels of a single type, and so our first task is to derive the equation relating the membrane potential and current through this channel.\\
+
+The first step is to find the potential at which the net ion flow through the channel is zero, so that the ionic current is zero. Recall that ions flow through the current due to both electric forces and diffusion due to the concentration gradients. The Nernst equation tells us the potential when the flow due to these two effects is equal and opposite. To solve for this we take an energy based picture. The change in electric potential energy when an ion moves from inside to outside the cell is given by:
+
+\begin{equation*}
+    \Delta U = -zqV
+\end{equation*}
+
+This is positive for a positive ion and negative potential. To pass from inside to outside the cell, the ion must have at least this much thermal energy. The energies of ions follow the Boltzmann distribution (a well established fact within statistical physics), so the probability of an ion having this much energy is given by:
+\begin{equation*}
+    P = e^{-\frac{\Delta U}{k_bT}} = e^{\frac{zqV}{k_bT}}
+\end{equation*}
+
+Ions will diffuse from outside to inside at a rate proportional to [outside] (their concentration outside the cell), while they will diffuse from inside to outside at a rate proportional to [inside] times the fraction with sufficient thermal energy to cross the potential difference. Setting these equal to each other, and using E to represent the potential at which these balance, gives:
+
+\begin{equation*}
+    \text{[outside]} = \text{[inside]}e^{\frac{zqE}{k_bT}}
+\end{equation*}
+
+And solving for E, the equilibrium potential, gives the Nernst equation:
+
+\begin{equation*}
+    E = \frac{k_bT}{zq} \log\left(\frac{\text{[outside]}}{\text{[inside]}}\right)
+\end{equation*}
+
+The parameters [outside], [inside], and T are all essentially constant for usual physiological conditions, so we treat the reversal potential as a constant. This can seem strange at first, but it results from the fact that only a relatively small number of ions need to cross the membrane to change the membrane potential, keeping the concentrations essentially constant.\\
+
+We can calculate the reversal potential for each of the four main ions:
+
+\begin{itemize}
+    \item Sodium: $E_{Na} \sim 50\text{ to }90mV$
+    \item Potassium: $E_{K} \sim -90\text{ to }-70mV$
+    \item Calcium: $E_{Ca} \sim 150mV$
+    \item Chloride: $E_{Cl} \sim -65\text{ to }-60mV$
+\end{itemize}
+
+Now consider the current through a channel when the membrane potential is not equal to the reversal potential. This current is given by Ohm's law, however, we have to offset the potential by the reversal potential to account for current driven by the concentration gradient. This gives:
+
+\begin{equation*}
+    i_m = g_i(V-E_i)
+\end{equation*}
+
+Where $i$ represents the current through the channel per unit area, $g_i$ is the conductance of channel $i$ per unit area (the inverse of resistance), and $E_i$ is the reversal potential of channel $i$. The total membrane current is given by summing this up across all ion channels. Note that each ion channel essentially wants to pull the membrane potential towards its reversal potential, and so the resting potential of a neuron is a weighted average of all its ion channel's reversal potentials.\\
+
+Many ion channels have voltage-dependent conductances, meaning that rather than remaining open with a fixed conductance, they open or close depending on the membrane potential. Biophysically, this is due to conformational changes in the protein structures of the channel - as the potential can essentially tug on the electrostatic features within the channel, since it is embedded in the membrane and thus across the potential difference. If this were not true, then neuron physiology would in fact be incredibly boring - as the dynamics would be entirely linear. Since the sum of linear functions is linear, we can lump all the non-voltage-dependent conductances into a single term, called the leakage term. Its reversal potential and conductance do not represent any single channel, but rather the (weighted) average of all the channels that are not voltage-dependent.\\
+
+We now construct an equivalent circuit for the neuron, by considering the membrane as a capacitor with specific membrane capacitance $c_m$, in parallel with resistors representing the various ion channels, as well as an externally injected current source. Note that these ion channels include the voltage-dependent conductances discussed above, the leakage term, and synaptic ion channels with conductances that depend on presynaptic activities (we will return to these later):
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{equivalent-circuit.png}
+\end{figure}
+
+Using circuit theory we can write down the equation for the membrane potential:
+
+\begin{equation*}
+    c_m \frac{dV}{dt} = -\bar{g}_L(V-E_L) + \sum_i g_i(V-E_i) + \frac{I_{e}}{A}
+\end{equation*}
+
+The additional voltage or synaptic dependencies not made explicit here. This is an ordinary differential equation and forms the foundation of all neuron models. We now explore two such models: the leaky integrate-and-fire model and the Hodgkin-Huxley model.\\
+
+\subsection{Leaky integrate-and-fire model}
+
+The leaky integrate-and-fire model results from making two simplifications. First of all, we ignore all active conductances, considering only the leakage term. Second, we gloss over the precise details of the action potential, replacing it with a dirac-delta spike whenever the membrane reaches a threshold $V_{th}$ and an immediate reset of the membrane potential to $V_{reset}$. Rewriting our equation above, multiplying by the specific membrane resistance, gives:
+
+\begin{equation*}
+    \tau_m\frac{dV}{dt} = E_L - V + R_mI_{e}
+\end{equation*}
+
+Where $\tau_m$ is the membrane time constant $c_mr_m$. Before adding spikes, we discuss solutions to this equation as is. In the case of a constant input current, the solution is simply an exponential relaxation to the steady state value $E_L + R_mI_{e}$, with a time constant $\tau_m$:
+
+\begin{equation*}
+    V(t) = E_L + R_mI_{e} + (V(0) - E_L - R_mI_{e})e^{-t/\tau_m}
+\end{equation*}
+
+In the case of a time-varying input current $I_{e}(t)$ (which we often use to model synaptic inputs), this equation is simply a low-pass filter of the input signal $I_{e}(t)$, offset by $E_L$. If you are not that familiar with simple ODEs such as this it is informative to go through the derivation of this. First of all, we rearrange the equation slightly and multiply by an integrating factor $\exp{\frac{t}{\tau_m}}$:
+
+\begin{equation*}
+    \left(\frac{dV}{dt} + \frac{V}{\tau_m}\right)e^{\frac{t}{\tau_m}} = \frac{1}{\tau_m}\left(E_L + R_mI_{e}(t)\right)e^{\frac{t}{\tau_m}}}
+\end{equation*}
+
+In this form, the left-hand side simplifies:
+
+\begin{equation*}
+    \frac{d}{dt}\left(V(t)e^{\frac{t}{\tau_m}}\right) = \left(E_L + R_mI_{e}(t)\right)e^{\frac{t}{\tau_m}}
+\end{equation*}
+
+Integrating both sides from $-\infty$ to $t$, and simplifying both the left-hand side and constant term on the right gives:
+
+\begin{equation*}
+    V(t) =  E_L + R_m\int_{-\infty}^{0}e^{-\frac{t'}{\tau_m}}I_{e}(t-t')dt'
+\end{equation*}
+
+If you look at the integral term, you see we have a weighted average of the input current over its history, multiplied by an exponentially decaying kernel. This is a low-pass filter: it roughly tracks the input current, but smooths out high frequency fluctuations. A Fourier analysis of this solution shows that its exactly equal to removing the higher frequency components of $I_{e}(t)$.\\
+
+We can now add spikes whenever the membrane potential reaches $V_{th}$. Unlike in the book, we will do this explicitly by using a dirac delta:
+
+\begin{equation*}
+    \tau_m\frac{dV}{dt} = E_L - V + R_mI_{e} + \sum_i^N\delta(t-t_k)(V_{reset}-V_{th})
+\end{equation*}
+
+With spikes times $t_k$ and the complete spike train $S(t)$ given by:
+
+\begin{align*}
+    t_k &= \underset{t}\arg(V(t) = V_{th})\\
+    S(t) &= \sum_k^N\delta(t-t_k)
+\end{align*}
+
+As shown in the diagram below, this is exactly the low-pass filter, with instantaneous spikes shown at the spike times:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{receptive.png}
+    \includegraphics[width=0.5\textwidth]{LIF.png}
 \end{figure}
+
+At this point, there is one informative exercise we can do, which is derive the firing rate of the LIF neuron as a function of a constant input current. This is straightforward to do: assuming $V(0) = E_L$, we can use our constant-input solution to find the time T of the first spike:
+
+\begin{equation*}
+    V_{th} = E_L + R_mI_{e} - R_mI_{e}e^{-T/\tau_m}
+\end{equation*}
+
+Rearranging for T gives:
+
+\begin{equation*}
+    T = \tau_m\log\left(\frac{R_mI_e}{R_mI_e + E_L - V_{th}}\right)
+\end{equation*}
+
+The firing rate is simply the inverse of this:
+
+\begin{equation*}
+    r = \frac{1}{\tau_m\log\left(\frac{R_mI_e}{R_mI_e + E_L - V_{th}}\right)}
+\end{equation*}
+
+This result is physically meaningful only when $R_mI_e + E_L > V_{th}$, otherwise the neuron will never spike. Note my derivation here is slightly simpler than that used in the book in that I set the reset potential to the resting potential, which is commonly done (and the alternative adds nothing new conceptually). We now show that this becomes approximately linear in the case of large input currents. First, we rewrite:
+
+\begin{equation*}
+    r = \frac{1}{\tau_m\log\left(1 - \frac{E_L - V_{th}}{R_mI_e + E_L - V_{th}}\right)}
+\end{equation*}
+
+And use the Taylor expansion of the logarithm: $\log(1+x) \approx x$ for small $x$. This gives:
+
+\begin{equation*}
+    r \approx \frac{1}{\tau_m}\left(1+\frac{R_mI_e}{V_{th} - E_L}\right)\text{   if } R_mI_e \gg V_{th} - E_L
+\end{equation*}
+
+\subsection{Hodgkin-Huxley model}
+
+\subsection{Synaptic conductances}
+
+\subsection{A brief historical note and further reading}
+
+This book is over 20 years old and, obviously, there have been a huge number of developments in the field since then. The topics we've covered here - the LIF neuron, Hodgkin-Huxley neuron, and synaptic conductances, remain incredibly relevant as a foundation. There are different directions in which one can expand upon these models. On the one hand, you can incorporate increasing levels of detail to capture neuron physiology better. This includes some of the work done in the next chapter on modelling neuron morphology with cable theory, and incorporating more ion channels such as in the Connor-Stevens model. This is an almost infinite rabbit hole to go down, and so I will omit these extensions in the notes.\\
+
+On the other hand, there is an increasing emphasis in the field on working on models that can capture the essential features of what a neuron computes, in a manner that can be very efficiently simulated, and that can be easily incorporated into larger networks. These models often don't concern themselves as much with exact biological realism, but envision neurons as more abstract computational units, and work in this field is often much more inspired by developments in machine learning. I recommend here some further reading down these lines. I do not intend this to be in any way opinionated on how much detail \emph{should} be included in a model, as this depends on your modelling context, and opinion still varies massively on how much detail is necessary to understand higher-level computational properties of networks.\\
+
+\begin{itemize}
+    \item \textbf{Exponential integrate-and-fire model}: Incorporates more detail of membrane potentials around the threshold with an exponential non-linearity.
+    \item \textbf{Izhikevich model}: A two-dimensional model that can capture a wide variety of spiking behaviours present in Hodgkin-Huxley neurons while being more efficient to simulate.
+    \item \textbf{Adaptive exponential integrate-and-fire models}: A further extension of the exponential integrate-and-fire model that incorporates spike frequency adaptation.
+    \item \textbf{Escape noise models}: These are stochastic models that can better approximate the noisiness of real spike generation.
+    \item \textbf{Multicompartment models}: I include a treatment of multicompartment models in the next chapter because there is fascinating work suggesting compartments may be necessary to understand how, for example, neurons compute gradient approximations to implement first-order learning rules, great work on dendritic integration, and much more.
+    \item \textbf{Surrogate gradients}: Training networks of LIF-like neurons (called spiking neural networks (SNNs)) to do useful things is incredibly difficult. Surrogate gradients are now the technique of choice for training them, bringing the power of backpropagation to SNNs.
+    \item \textbf{Synaptic models}: There's a wealth of models that use LIF-like neurons with more sophisticated synaptic dynamics, to include effects such as short-term plasticity, intelligent weight updates, and far more.
+\end{itemize}
+    
+
 
 \end{document}
